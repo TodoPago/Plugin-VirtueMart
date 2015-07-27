@@ -1,0 +1,114 @@
+<a name="inicio"></a>
+VIRTUEMART
+============
+
+Plug in para la integración con gateway de pago <strong>Todo Pago</strong>
+- [Consideraciones Generales](#consideracionesgenerales)
+- [Instalación](#instalacion)
+- [Configuración](#configuracion)
+- [Configuración plug in](#confplugin)
+- [Datos adiccionales para prevención de fraude](#cybersource) 
+- [Carga de prouctos](#productos) 
+
+<a name="consideracionesgenerales"></a>
+## Consideraciones Generales
+El plug in de pagos de <strong>Todo Pago</strong>, provee a las tiendas VIRTUEMART de un nuevo m&eacute;todo de pago, integrando la tienda al gateway de pago.
+La versión de este plug in esta testeada en PHP 5.3-5.4-5.6, VIRTUEMART 3.0+ Y JOOMLA 2.5+
+
+<a name="instalacion"></a>
+## Instalación
+1.  Extensions->plugin TodoPago -> Install
+2.	Subir el archivo .zip
+3.	Extensions->Extension Manager buscar el plugin TodoPago y habilitarlo
+<sub><em>Extension Manager</em></sub>
+![imagen Extension Manager](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/extension-manager.png)
+
+
+
+[<sub>Volver a inicio</sub>](#inicio)
+
+<a name="configuracion"></a>
+##Configuración
+
+[configuración plug in](#confplugin).
+<a name="confplugin"></a>
+####Configuración plug in
+Para llegar al menu de configuración ir a: <em>Virtuemart -> Payment Methods -> New</em>, completar el formulario y elegir TodoPago entre los medios de pago y grabar<br />
+Al grabar dirigirse a la tab Configuration y completar los datos de conexión y usuario de TodoPago.
+<br />
+<sub><em>Payment Methods</em></sub>
+![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/payment-methods-1.png)
+
+![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/payment-methods-2.png)
+
+<a name="cybersource"></a>
+## Prevención de Fraude
+Para crear los campos adicionales para la Prevención de Fraude hay que crearlos como Custom Fields.
+Productos  -> Custom Fields <br />
+Crear el grupo TodoPago ( Field Type:  String, Custom Group: Group ) Save and Close.<br />
+Una vez creado el grupo hay que crear los campos adicionales de ese Grupo como indica la foto.<br/>
+Para crear campos de tipo lista se debe asignarle el tipo List y los valores separados por ";"
+<sub><em>Custom Fields</em></sub>
+![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/custom-fields-1.png)
+![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/custom-fields-2.png)
+
+<a name="productos"></a>
+## Productos
+Para crear o actualizar los productos hay que asigarle en la tab Custom Fields el grupo creado y completar los campos.
+<sub><em>Product Custom Fields</em></sub>
+![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/order-status.png)
+ 
+<a name="ordenes"></a>
+## Ordenes
+Para obtener el status de las ordenes hay que dirigirse a  Orders -> Nro de orden y en la sección inferior de la ficha de la orden hay un botón que dice “Get TodoPago Status”, al apretarlo se muestra el detalle del status.
+![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/productos-custom-fields.png)
+
+[<sub>Volver a inicio</sub>](#inicio)
+
+####Consideraciones Generales (para todos los verticales, por defecto RETAIL)
+El plug in, toma valores est&aacute;ndar del framework para validar los datos del comprador.
+Para acceder a los datos de TodoPago se utilizar el objeto $method que se puede crear de la forma: $method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id).
+<br />
+Para acceder a los datos del vendedor, productos y carrito se usan los objetos $cart y $order que llegan como parámetro en los métodos en los que se necesitan. 
+<br />
+Este es un ejemplo de la mayoría de los campos que se necesitan para comenzar la operación <br />
+<br />
+'CSBTCITY'=>$cart->BT['city'], //Ciudad de facturación, MANDATORIO.		
+<br />
+'CSBTCUSTOMERID'=>$cart->user->customer_number, 
+<br />
+'CSBTIPADDRESS'=>$this->getTodoPagoClientIp(),	
+<br />
+'CSBTEMAIL'=>$cart->BT['email'], 	
+<br />
+'CSBTFIRSTNAME'=>$cart->BT['first_name'] ,		
+<br />
+'CSBTLASTNAME'=>$cart->BT['last_name'], 		
+<br />
+'CSBTPHONENUMBER'=>$cart->BT['phone_1'],		
+<br />
+'CSBTPOSTALCODE'=>$cart->BT['zip'], 
+<br />
+'CSBTSTATE'=>$this->tp_states, 
+<br />
+'CSBTSTREET1'=>$cart->BT['address_1'], 
+<br />
+'CSPTGRANDTOTALAMOUNT'=>$cart->cartPrices['billTotal'],                                 
+<br />
+'AMOUNT' => $cart->cartPrices['billTotal']	
+
+<br />
+Los únicos modelos que tenemos que incluir para obtener los datos restantes son 'Customfields', 'currency' e invocar a los métodos staticos de la clase ShopFunctions.<br />
+
+$customFieldsModel = VmModel::getModel ('Customfields');<br />
+$customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);    <br />   <br />
+$currency_model = VmModel::getModel('currency');<br />
+$currency = $currency_model->getCurrency($order['details']['BT']->user_currency_id);<br />;<br />
+$countryIso = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id,'country_2_code');<br />
+$countryName = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id);<br />
+
+
+####Muy Importante
+<strong>Provincias:</strong> Al ser un campo MANDATORIO para enviar y propio del plugin este campo se completa por parte del usuario al momento del check out.
+<br />
+[<sub>Volver a inicio</sub>](#inicio)
