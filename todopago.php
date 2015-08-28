@@ -1,84 +1,47 @@
 <?php
 
 /*
-
 * @author todopago.
-
 * @version $Id: todopago.php 7487 2013-12-17 15:03:42Z alatak $
-
 * @package VirtueMart
-
 * @subpackage payment
-
 * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
-
 * VirtueMart is free software. This version may have been modified pursuant
-
 * to the GNU General Public License, and as distributed it includes or
-
 * is derivative of works licensed under the GNU General Public License or
-
 * other free or open source software licenses.
-
 * See /administrator/components/com_virtuemart/COPYRIGHT.php for copyright notices and details.
-
 *
-
 * http://virtuemart.org
-
 */
 
 defined ('_JEXEC') or die('Restricted access');
 
-
-
 if (!class_exists ('vmPSPlugin')) {
-
-
-
 	require(JPATH_VM_PLUGINS . DS . 'vmpsplugin.php');
-
 }
 
-
-
 require('sdk/todopago.php');
-
-
+require ('cs/helpers.php');
 
 class plgVmpaymentTodopago extends vmPSPlugin {
 
-
-
 	private $tp_states = '';
-
-
 
 	function __construct (& $subject, $config) {
 
-
-
 		parent::__construct ($subject, $config);
-
-
 
 		// unique filelanguage for all TODOPAGO methods
 
 		$jlang = JFactory::getLanguage ();
-
 		$jlang->load ('plg_vmpayment_todopago', JPATH_ADMINISTRATOR, NULL, TRUE);
-
 		$this->_loggable = TRUE;
-
 		$this->_debug = TRUE;
 
-		$this->tableFields = array_keys ($this->getTableSQLFields ());
-
+		$this->tableFields = array_keys (Helper::getTableSQLFields ());
 		$this->_tablepkey = 'id'; //virtuemart_TODOPAGO_id';
-
 		$this->_tableId = 'id'; //'virtuemart_TODOPAGO_id';
-
-
 
 		$varsToPush = array(
 			'tp_vertical_type'    => array('', 'char'),
@@ -130,8 +93,6 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 			$mb_data['payment_status'] = 'Completed';
 			break;
 
-
-
 			case 0 :
 
 			$mb_data['payment_status'] = 'Pending';
@@ -170,22 +131,13 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 	}
 
 
-
-
-
 	function _getPaymentResponseHtml ($paymentTable, $payment_name) {
 
-
-
 		VmConfig::loadJLang('com_virtuemart');
-
-
 
 		$html = '<table>' . "\n";
 
 		$html .= $this->getHtmlRow ('COM_VIRTUEMART_PAYMENT_NAME', $payment_name);
-
-
 
 		if (!empty($paymentTable)) {
 
@@ -202,34 +154,19 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 	}
 
 
-
-
-
-
-
 	function _getInternalData ($virtuemart_order_id, $order_number = '') {
-
-
 
 		$db = JFactory::getDBO ();
 
-
-
 		$q = 'SELECT * FROM `' . $this->_tablename . '` WHERE ';
-
-
 
 		if ($order_number) {
 
-
-
 			$q .= " `order_number` = '" . $order_number . "'";
 
-		} 
+		}
 
 		else {
-
-
 
 			$q .= ' `virtuemart_order_id` = ' . $virtuemart_order_id;
 
@@ -247,23 +184,15 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 			// JError::raiseWarning(500, $db->getErrorMsg());
 
-
-
 			return '';
-
 
 
 		}
 
 
-
 		return $paymentTable;
 
 	}
-
-
-
-
 
 
 
@@ -274,29 +203,16 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 		$query = 'SHOW COLUMNS FROM `' . $this->_tablename . '` ';
 
 
-
 		$db->setQuery ($query);
 
-
-
 		$columns = $db->loadColumn (0);
-
-
-
-
-
-
 
 		$post_msg = '';
 
 
-
 		foreach ($mb_data as $key => $value) {
 
-
-
 			$post_msg .= $key . "=" . $value . "<br />";
-
 
 
 			$table_key = 'mb_' . $key;
@@ -328,11 +244,6 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 	}
 
 
-
-
-
-
-
 	function _parse_response ($response) {
 
 		$matches = array();
@@ -354,367 +265,283 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 	}
 
 
-	function getTableSQLFields () {
-
-		$SQLfields = array('id'                     => 'int(11) UNSIGNED NOT NULL AUTO_INCREMENT',
-			'virtuemart_order_id'    => 'int(1) UNSIGNED',
-			'order_number'           => ' char(64)',
-			'virtuemart_paymentmethod_id' => 'mediumint(1) UNSIGNED',
-			'payment_name'            => 'varchar(5000)',
-			'payment_order_total'     => 'decimal(15,5) NOT NULL DEFAULT \'0.00000\'',
-			'payment_currency'        => 'char(3) ',
-			'cost_per_transaction'    => 'decimal(10,2)',
-			'cost_percent_total'      => 'decimal(10,2)',
-			'tax_id'                  => 'smallint(1)',
-			'security_code'                  => 'varchar(100)',
-			'user_session'            => 'varchar(255)',
-
-			// status report data returned by TODOPAGO to the merchant
+	function plgVmOnShowOrderPaymentBE($virtuemart_order_id, $paymethod_id){
 
 
-
-			'mb_pay_to_email'         => 'varchar(50)',
-			'mb_pay_from_email'       => 'varchar(50)',
-			'mb_merchant_id'          => 'int(10) UNSIGNED',
-			'mb_transaction_id'       => 'varchar(15)',
-			'mb_rec_payment_id'       => 'int(10) UNSIGNED',
-			'mb_rec_payment_type'     => 'varchar(16)',
-			'mb_amount'               => 'decimal(19,2)',
-			'mb_currency'             => 'char(3)',
-			'mb_status'               => 'tinyint(1)',
-			'mb_md5sig'               => 'char(32)',
-			'mb_sha2sig'              => 'char(64)',
-			'mbresponse_raw'          => 'varchar(512)',
-
-                           // AMBIENTE PRODUCCION                       
-
-			'tp_vertical_type'    => 'varchar(100)',
-			'tp_canal_ingreso'    => 'varchar(100)',
-			'tp_endpoint_test' => 'varchar(100)',
-			'tp_wsdl_test'   => 'varchar(100)',
-			'tp_auth_http'          => 'varchar(100)',
-			'tp_dead_line'          => 'varchar(100)',
-			'tp_id_site_test'              => 'varchar(100)',
-			'tp_security_code_test'       => 'varchar(100)',
+	}
 
 
-			'tp_endpoint_prod'           => 'varchar(100)',
-			'tp_wsdl_prod'               => 'varchar(100)',
-			'tp_id_site_prod'            => 'varchar(100)',
-			'tp_security_code_prod'      => 'varchar(100)',
-			'tp_order_status_init'      =>  'varchar(100)',
-			'tp_order_status_aproved'    =>  'varchar(100)',
-			'tp_order_status_rejected'   =>  'varchar(100)',
-			'tp_order_status_offline'     => 'varchar(100)',
-			'tp_security_code_prod'      =>  'varchar(100)',    
-			'tp_ambiente'      =>  'varchar(100)'            
+	function plgVmConfirmedOrder ($cart, $order) {
+
+
+		if (!($method = $this->getVmPluginMethod ($order['details']['BT']->virtuemart_paymentmethod_id))) {
+			return NULL;
+		}
+
+
+		if (!$this->selectedThisElement ($method->payment_element)) {
+
+			return FALSE;
+		}
+
+		$session = JFactory::getSession ();
+		$return_context = $session->getId ();
+		$this->logInfo ('plgVmConfirmedOrder order number: ' . $order['details']['BT']->order_number, 'message');
+
+		if (!class_exists ('VirtueMartModelOrders')) {
+
+			require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
+		}
+
+
+
+		if (!class_exists ('VirtueMartModelCurrency')) {
+
+			require(VMPATH_ADMIN . DS . 'models' . DS . 'currency.php');
+		}
+
+
+		$usrBT = $order['details']['BT'];
+		$address = ((isset($order['details']['ST'])) ? $order['details']['ST'] : $order['details']['BT']);
+
+		if (!class_exists ('TableVendors')) {
+
+			require(VMPATH_ADMIN . DS . 'tables' . DS . 'vendors.php');
+		}
+
+
+		$vendorModel = VmModel::getModel ('Vendor');
+		$vendorModel->setId (1);
+		$vendor = $vendorModel->getVendor ();
+		$vendorModel->addImages ($vendor, 1);
+		$this->getPaymentCurrency ($method);
+
+		$q = 'SELECT `currency_code_3` FROM `#__virtuemart_currencies` WHERE `virtuemart_currency_id`="'.$method->payment_currency . '" ';
+		$db = JFactory::getDBO ();
+
+		$db->setQuery ($q);
+
+		$currency_code_3 = $db->loadResult ();
+
+
+
+		$totalInPaymentCurrency = vmPSPlugin::getAmountInCurrency($order['details']['BT']->order_total,$method->payment_currency);
+
+		$cartCurrency = CurrencyDisplay::getInstance($cart->pricesCurrency);
+
+
+
+		if ($totalInPaymentCurrency['value'] <= 0) {
+
+			vmInfo (vmText::_ ('VMPAYMENT_TODOPAGO_PAYMENT_AMOUNT_INCORRECT'));
+			return FALSE;
+		}
+
+
+		$lang = JFactory::getLanguage ();
+		$tag = substr ($lang->get ('tag'), 0, 2);
+
+
+		$post_variables = array();
+		require_once ('cs/TPConnector.php');
+		$tpconnector = new TPConnector();
+		$connector_data = $tpconnector->createTPConnector($method);
+
+		$connector = $connector_data['connector'];
+		$security_code = $connector_data['security'];
+		$merchant = $connector_data['merchant'];
+
+
+
+		$return_url =  JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&on=' .
+
+		$order['details']['BT']->order_number .
+
+		'&pm=' .
+
+		$order['details']['BT']->virtuemart_paymentmethod_id .
+
+		'&Itemid=' . vRequest::getInt ('Itemid') .
+
+		'&lang='.vRequest::getCmd('lang','');
+
+
+
+		$cancel_url = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginUserPaymentCancel&on=' .
+
+		$order['details']['BT']->order_number .
+
+		'&pm=' .
+
+		$order['details']['BT']->virtuemart_paymentmethod_id .
+
+		'&Itemid=' . vRequest::getInt ('Itemid') .
+		'&lang='.vRequest::getCmd('lang','');
+
+
+		$status_url  = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&lang='.vRequest::getCmd('lang','');
+
+
+		$optionsSAR_comercio = array (
+
+			'Security' => $security_code,
+
+			'EncodingMethod' => 'XML',
+
+			'Merchant' => $merchant,
+
+			'URL_OK' => $return_url,
+
+			'URL_ERROR' => $cancel_url
 
 			);
 
-return $SQLfields;
-}
+		$customFieldsModel = VmModel::getModel ('Customfields');
+
+		$optionsSAR_operacion = $this->getCommonFields($cart, $customFieldsModel, $this->tp_states);
+
+		$currency_model = VmModel::getModel('currency');
+		$currency = $currency_model->getCurrency($order['details']['BT']->user_currency_id);
+
+
+		$countryIso = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id,'country_2_code');
+		$countryName = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id);
+
+		$extra_fields = array();
+
+		require('cs/FactoryTodopago.php');
+		$extra_fields = FactoryTodopago::get_extractor($method->tp_vertical_type, $cart, $customFieldsModel);
+
+		$optionsSAR_operacion = array_merge($optionsSAR_operacion, $extra_fields);
+
+		$optionsSAR_operacion['MERCHANT'] = $merchant;
+		$optionsSAR_operacion['CURRENCYCODE'] = "032";
+		$optionsSAR_operacion['CSPTCURRENCY'] = "ARS";
+		$optionsSAR_operacion['OPERATIONID'] = $order['details']['BT']->order_number;
+		$optionsSAR_operacion['CSBTCOUNTRY'] = $countryIso;
+		$optionsSAR_operacion['CSMDD9'] = JFactory::getUser()->password;
+		$optionsSAR_operacion['CSSTSTATE'] = $this->tp_states;
+		$optionsSAR_operacion['CSSTCOUNTRY'] = $countryIso;
+		$optionsSAR_operacion['CSMDD12'] = $method->tp_dead_line;
+		$optionsSAR_operacion['CSMDD13'] = $this->_sanitize_string($cart->cartData['shipmentName']);
+
+		error_log("TP - SARcomercio - ".json_encode($optionsSAR_comercio)."\r\n", 3, "todopago.log");
+		error_log("TP - SARoperacion - ".json_encode($optionsSAR_operacion)."\r\n", 3, "todopago.log");
+
+		$rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
+
+		if($rta["StatusCode"] == 702){
+
+			error_log("TP - SARoperacion - reintento SAR".json_encode($optionsSAR_operacion)."\r\n", 3, "todopago.log");
+
+			$rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
+		}
+
+		setcookie('RequestKey',$rta["RequestKey"],  time() + (86400 * 30), "/");
+
+		$session = JFactory::getSession ();
+
+		$return_context = $session->getId ();
 
 
 
-function plgVmOnShowOrderPaymentBE($virtuemart_order_id, $paymethod_id){
+		$dbValues['user_session'] = $return_context;
+
+		$dbValues['order_number'] = $order['details']['BT']->order_number;
+
+		$dbValues['payment_name'] = $this->renderPluginName ($method, $order);
+
+		$dbValues['virtuemart_paymentmethod_id'] = $cart->virtuemart_paymentmethod_id;
+
+		$dbValues['cost_per_transaction'] = $method->cost_per_transaction;
+
+		$dbValues['cost_percent_total'] = $method->cost_percent_total;
+
+		$dbValues['payment_currency'] = $method->payment_currency;
+
+		$dbValues['payment_order_total'] = $totalInPaymentCurrency['value'];
+
+		$dbValues['tax_id'] = $method->tax_id;
+
+		$dbValues['security_code'] = $method->security_code;
+
+		$this->storePSPluginInternalData ($dbValues);
 
 
-}
+		$cart->_confirmDone = TRUE;
 
+		$cart->_dataValidated = TRUE;
 
+		$cart->setCartIntoSession ();
 
+		$this->logInfo ($rta, 'ERROR');
 
+		if ($rta['StatusCode']!= -1){
+			echo "<script>alert('Su pago no puede ser procesado. Intente nuevamente')</script>";
 
-function plgVmConfirmedOrder ($cart, $order) {
+			echo JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginUserPaymentCancel&on=' .
 
+			$order['details']['BT']->order_number .
 
-	if (!($method = $this->getVmPluginMethod ($order['details']['BT']->virtuemart_paymentmethod_id))) {
-		return NULL;
-	} 
+			'&pm=' .
 
+			$order['details']['BT']->virtuemart_paymentmethod_id .
 
-	if (!$this->selectedThisElement ($method->payment_element)) {
+			'&Itemid=' . vRequest::getInt ('Itemid') .
 
-		return FALSE;
+			'&lang='.vRequest::getCmd('lang','');
+
+		}else{
+
+			header('Location: '.$rta['URL_Request']);
+		}
 	}
 
-	$session = JFactory::getSession ();
-	$return_context = $session->getId ();
-	$this->logInfo ('plgVmConfirmedOrder order number: ' . $order['details']['BT']->order_number, 'message');
-
-	if (!class_exists ('VirtueMartModelOrders')) {
-
-		require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
+	function catIdToName($catid) {
+		$db = JFactory::getDBO();
+		
+		return $row;
 	}
 
+	function getCommonFields($cart, $customFieldsModel, $tp_states=null){
 
+		$CSITPRODUCTDESCRIPTION = array();
+		$CSITPRODUCTNAME = array();
+		$CSITPRODUCTSKU = array();
+		$CSITTOTALAMOUNT = array();
+		$CSITQUANTITY = array();
+		$CSITUNITPRICE = array();
+		$CSITPRODUCTCODE = array();
 
-	if (!class_exists ('VirtueMartModelCurrency')) {
+		if (!class_exists( 'VmConfig' )) require(JPATH_ADMINISTRATOR.DS.'components'.DS.'com_virtuemart'.DS.'helpers'.DS.'config.php');
 
-		require(VMPATH_ADMIN . DS . 'models' . DS . 'currency.php');
-	}
+		foreach($cart->products as $prod){
+			$categoryModel = VmModel::getModel('Category');
+			$cat = $categoryModel->getCategory($prod->category, true);
+			$cat_name = $cat->category_name;
 
+			$CSITPRODUCTCODE[] = $cat_name;
 
-	$usrBT = $order['details']['BT'];
-	$address = ((isset($order['details']['ST'])) ? $order['details']['ST'] : $order['details']['BT']);
+			$product_description = $this->_sanitize_string(trim(urlencode(htmlentities(strip_tags($prod->product_desc)))));
+			$CSITPRODUCTDESCRIPTION[] = substr($product_description, 0, 10);
+			$CSITPRODUCTNAME[] =  trim(urlencode(htmlentities(strip_tags($prod->product_name))));
+			$CSITPRODUCTSKU[] = $prod->product_sku;
+			$CSITTOTALAMOUNT[] = number_format(($prod->prices['salesPrice'] * $prod->amount),2,".", "");
+			$CSITQUANTITY[] = intval($prod->amount);
+			$CSITUNITPRICE[] = number_format($prod->prices['salesPrice'],2,".","");
 
-	if (!class_exists ('TableVendors')) {
+			$customfields = $customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);
+		}
 
-		require(VMPATH_ADMIN . DS . 'tables' . DS . 'vendors.php');
-	}
+		/** COMMON FIELDS **/
 
+		$fields = array(
 
-	$vendorModel = VmModel::getModel ('Vendor');
-	$vendorModel->setId (1);
-	$vendor = $vendorModel->getVendor ();
-	$vendorModel->addImages ($vendor, 1);
-	$this->getPaymentCurrency ($method);
-
-	$q = 'SELECT `currency_code_3` FROM `#__virtuemart_currencies` WHERE `virtuemart_currency_id`="'.$method->payment_currency . '" ';
-	$db = JFactory::getDBO ();
-
-	$db->setQuery ($q);
-
-	$currency_code_3 = $db->loadResult ();
-
-
-
-	$totalInPaymentCurrency = vmPSPlugin::getAmountInCurrency($order['details']['BT']->order_total,$method->payment_currency);
-
-	$cartCurrency = CurrencyDisplay::getInstance($cart->pricesCurrency);
-
-
-
-	if ($totalInPaymentCurrency['value'] <= 0) {
-
-		vmInfo (vmText::_ ('VMPAYMENT_TODOPAGO_PAYMENT_AMOUNT_INCORRECT'));
-		return FALSE;
-	}
-
-
-	$lang = JFactory::getLanguage ();
-	$tag = substr ($lang->get ('tag'), 0, 2);
-
-
-	$post_variables = array();
-
-	$connector_data = $this->createTPConnector($method);
-
-	$connector = $connector_data['connector'];
-	$security_code = $connector_data['security'];
-	$merchant = $connector_data['merchant'];
-
-
-
-	$return_url =  JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&on=' .
-
-	$order['details']['BT']->order_number .
-
-	'&pm=' .
-
-	$order['details']['BT']->virtuemart_paymentmethod_id .
-
-	'&Itemid=' . vRequest::getInt ('Itemid') .
-
-	'&lang='.vRequest::getCmd('lang','');
-
-
-
-	$cancel_url = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginUserPaymentCancel&on=' .
-
-	$order['details']['BT']->order_number .
-
-	'&pm=' .
-
-	$order['details']['BT']->virtuemart_paymentmethod_id .
-
-	'&Itemid=' . vRequest::getInt ('Itemid') .
-
-	'&lang='.vRequest::getCmd('lang','');
-
-
-
-	$status_url  = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&lang='.vRequest::getCmd('lang','');
-
-
-
-
-
-	$optionsSAR_comercio = array (
-
-		'Security' => $security_code,
-
-		'EncodingMethod' => 'XML',
-
-		'Merchant' => $merchant,
-
-		'URL_OK' => $return_url,
-
-		'URL_ERROR' => $cancel_url
-
-		);
-
-	$customFieldsModel = VmModel::getModel ('Customfields');
-	$optionsSAR_operacion = $this->getCommonFields($cart, $customFieldsModel); 
-
-	$currency_model = VmModel::getModel('currency');
-	$currency = $currency_model->getCurrency($order['details']['BT']->user_currency_id);
-
-
-	$countryIso = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id,'country_2_code');
-	$countryName = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id);
-
-	$extra_fields = array();
-
-	switch('retail'){
-
-		case 'retail':
-
-		$extra_fields = $this->getRetailFields($cart, $customFieldsModel);
-
-		break;
-
-		case 'ticketing':
-
-		$extra_fields = $this->getTicketingFields($cart, $customFieldsModel);
-
-		break;
-
-		case 'services':
-
-		$extra_fields = $this->getServicesFields($order, $customFieldsModel);
-
-		break;
-
-		case 'digital':
-
-		$extra_fields = $this->getDigitalGoodsFields($cart, $customFieldsModel);
-
-		break;
-
-		default:
-
-		$extra_fields = $this->getRetailFields($cart, $customFieldsModel);
-
-		break;
-	}
-
-
-
-	$optionsSAR_operacion = $this->mergeCommonExtraFields($optionsSAR_operacion, $extra_fields);          
-
-	$optionsSAR_operacion['MERCHANT'] = $merchant;
-	$optionsSAR_operacion['CURRENCYCODE'] = "032";
-	$optionsSAR_operacion['CSPTCURRENCY'] = "ARS";
-	$optionsSAR_operacion['OPERATIONID'] = $order['details']['BT']->order_number;
-	$optionsSAR_operacion['CSBTCOUNTRY'] = $countryIso;
-	$optionsSAR_operacion['CSMDD9'] = JFactory::getUser()->password;
-	$optionsSAR_operacion['CSSTSTATE'] = $this->tp_states; 	
-	$optionsSAR_operacion['CSSTCOUNTRY'] = $countryIso;	
-	$optionsSAR_operacion['CSMDD12'] = $method->tp_dead_line;
-	$optionsSAR_operacion['CSMDD13'] = $this->_sanitize_string($cart->cartData['shipmentName']);
-	
-	$rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
-
-	setcookie('RequestKey',$rta["RequestKey"],  time() + (86400 * 30), "/");
-
-	$session = JFactory::getSession ();
-
-	$return_context = $session->getId ();
-
-
-
-	$dbValues['user_session'] = $return_context;
-
-	$dbValues['order_number'] = $order['details']['BT']->order_number;
-
-	$dbValues['payment_name'] = $this->renderPluginName ($method, $order);
-
-	$dbValues['virtuemart_paymentmethod_id'] = $cart->virtuemart_paymentmethod_id;
-
-	$dbValues['cost_per_transaction'] = $method->cost_per_transaction;
-
-	$dbValues['cost_percent_total'] = $method->cost_percent_total;
-
-	$dbValues['payment_currency'] = $method->payment_currency;
-
-	$dbValues['payment_order_total'] = $totalInPaymentCurrency['value'];
-
-	$dbValues['tax_id'] = $method->tax_id;
-
-	$dbValues['security_code'] = $method->security_code;
-
-	$this->storePSPluginInternalData ($dbValues);
-
-
-	$cart->_confirmDone = TRUE;
-
-	$cart->_dataValidated = TRUE;
-
-	$cart->setCartIntoSession ();
-
-	$this->logInfo ($rta, 'ERROR');
-
-	if ($rta['StatusCode']!= -1){
-		echo "<script>alert('Su pago no puede ser procesado. Intente nuevamente')</script>";
-
-	}else{
-
-		header('Location: '.$rta['URL_Request']);
-	}
-}
-
-
-
-function mergeCommonExtraFields($operation, $extra){
-
-	$result = array_merge($operation, $extra);
-	return $result;
-
-}
-
-
-
-function getCommonFields($cart, $customFieldsModel){
-
-	$CSITPRODUCTDESCRIPTION = array();
-	$CSITPRODUCTNAME = array();
-	$CSITPRODUCTSKU = array();
-	$CSITTOTALAMOUNT = array();
-	$CSITQUANTITY = array();
-	$CSITUNITPRICE = array();
-	$CSITPRODUCTCODE = array();
-
-	foreach($cart->products as $prod){
-
-		$CSITPRODUCTCODE[] = "default";
-		$product_description = $this->_sanitize_string(trim(urlencode(htmlentities(strip_tags($prod->product_desc)))));
-		$CSITPRODUCTDESCRIPTION[] = substr($product_description, 0, 10);
-		$CSITPRODUCTNAME[] =  trim(urlencode(htmlentities(strip_tags($prod->product_name))));
-		$CSITPRODUCTSKU[] = $prod->product_sku;
-		$CSITTOTALAMOUNT[] = number_format(($prod->prices['salesPrice'] * $prod->amount),2,".", "");
-		$CSITQUANTITY[] = intval($prod->amount);
-		$CSITUNITPRICE[] = number_format($prod->prices['salesPrice'],2,".","");
-
-		$customfields = $customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);
-
-            /*foreach($customfields as $custom){
-                
-               if ($custom->custom_desc == 'CSITPRODUCTCODE'){
-                    $CSITPRODUCTCODE[] = "default";//trim(urlencode(htmlentities(strip_tags($custom->customfield_value))));
-                }
-            }*/
-        }
-
-        /** COMMON FIELDS **/
-
-        $fields = array(		                        
-
-                    	'CSBTCITY'=>$cart->BT['city'], //Ciudad de facturación, MANDATORIO.		
+                    	'CSBTCITY'=>$cart->BT['city'], //Ciudad de facturación, MANDATORIO.
 
                     	'CSBTCUSTOMERID'=>$cart->user->customer_number, //Identificador del usuario al que se le emite la factura. MANDATORIO. No puede contener un correo electrónico.		
 
-                    	'CSBTIPADDRESS'=>$this->getTodoPagoClientIp(), //IP de la PC del comprador. MANDATORIO.		
+                    	'CSBTIPADDRESS'=>Helper::getTodoPagoClientIp(), //IP de la PC del comprador. MANDATORIO.
 
                     	'CSBTEMAIL'=>$cart->BT['email'], //Mail del usuario al que se le emite la factura. MANDATORIO.		
 
@@ -728,7 +555,7 @@ function getCommonFields($cart, $customFieldsModel){
 
                     	'CSBTPOSTALCODE'=>$cart->BT['zip'], //Código Postal de la dirección de facturación. MANDATORIO.		
 
-                    	'CSBTSTATE'=>$this->tp_states, //Provincia de la dirección de facturación. MANDATORIO. Ver tabla anexa de provincias.		
+                    	'CSBTSTATE'=>$tp_states, //Provincia de la dirección de facturación. MANDATORIO. Ver tabla anexa de provincias.		
 
                     	'CSBTSTREET1'=>$this->_sanitize_string($cart->BT['address_1']), //Domicilio de facturación (calle y nro). MANDATORIO.				
 
@@ -753,153 +580,13 @@ function getCommonFields($cart, $customFieldsModel){
 
                     	);
 
-
-
 return $fields;
 
 
-
 }
-
-
-
-function getRetailFields($cart, $customFieldsModel){
-
-
-
-	$fields = array(		
-
-                    	'CSSTCITY'=> $this->_sanitize_string($cart->BT['city']), //Ciudad de enví­o de la orden. MANDATORIO.		
-
-
-
-                    	'CSSTEMAIL'=> $cart->BT['email'], //Mail del destinatario, MANDATORIO.		
-
-                    	'CSSTFIRSTNAME'=> $this->_sanitize_string($cart->BT['first_name']), //Nombre del destinatario. MANDATORIO.		
-
-                    	'CSSTLASTNAME'=> $this->_sanitize_string($cart->BT['last_name']), //Apellido del destinatario. MANDATORIO.		
-
-                    	'CSSTPHONENUMBER'=> $this->_sanitize_string($cart->BT['phone_1']),//Número de teléfono del destinatario. MANDATORIO.		
-
-                    	'CSSTPOSTALCODE'=> $cart->BT['zip'],//Código postal del domicilio de envío. MANDATORIO.		
-
-                    	'CSSTSTREET1'=> $this->_sanitize_string($cart->BT['address_1']), //Domicilio de envío. MANDATORIO.				
-
-                    	//Retail: datos a enviar por cada producto, los valores deben estar separado con #:		
-
-                    	);
-
-
-
-	return $fields;   
-
-}
-
-
-
-function getTravelFields($data, $customFieldsModel){
-
-
-
-	$fields = array();
-
-
-
-	return $fields;
-
-}
-
-
-
-function getTicketingFields($data, $customFieldsModel){
-
-	$CSMDD33 = array();
-	$CSMDD34 = array();
-
-	foreach($data->products as $prod){
-
-		$customfields = $customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);
-
-		foreach($customfields as $custom){
-			if ($custom->custom_desc == 'CSMDD33'){
-				$CSMDD33[] = trim(urlencode(htmlentities(strip_tags($custom->customfield_value))));
-			}
-			if ($custom->custom_desc == 'CSMDD34'){
-				$CSMDD34[] = trim(urlencode(htmlentities(strip_tags($custom->customfield_value))));
-			}
-		}
-	}
-
-
-	$fields = array(		
-
-                	'CSMDD33'=>implode('#',$CSMDD33), //Tipo de delivery. MANDATORIO. Valores posibles: WEB Session, Email, SmartPhone		
-                	'CSMDD34'=>implode('#',$CSMDD34)
-                	);
-
-	return $fields;	
-}
-
-
-
-function getDigitalGoodsFields($data, $customFieldsModel){
-
-	$CSMDD31 = array();
-
-	foreach($data->products as $prod){
-
-		$customfields = $customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);
-
-		foreach($customfields as $custom){
-			if ($custom->custom_desc == 'CSMDD31'){
-				$CSMDD31[] = trim(urlencode(htmlentities(strip_tags($custom->customfield_value))));
-			}
-		}
-	}
-
-	$fields = array(		
-
-                	'CSMDD31'=>implode('#',$CSMDD31), //Tipo de delivery. MANDATORIO. Valores posibles: WEB Session, Email, SmartPhone		
-                	);
-
-	return $fields;	
-}
-
-
-
-function getServicesFields($data, $customFieldsModel){
-
-	$CSMDD28 = array();
-
-	foreach($data->products as $prod){
-
-		$customfields = $customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);
-
-		foreach($customfields as $custom){
-			if ($custom->custom_desc == 'CSMDD28'){
-				$CSMDD28[] = trim(urlencode(htmlentities(strip_tags($custom->customfield_value))));
-			}
-		}
-	}
-
-	$fields = array(		
-
-                    	'CSMDD28'=>implode('#',$CSMDD28), //Tipo de Servicio. MANDATORIO. Valores posibles: Luz, Gas, Telefono, Agua, TV, Cable, Internet, Impuestos.		
-                    	);
-
-
-
-	return $fields;
-}
-
 
 
 function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrencyId) {
-
-
-
-
-
 
 
 	if (!($method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id))) {
@@ -913,11 +600,6 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 		} // Another method was selected, do nothing
 
 
-
-
-
-
-
 		if (!$this->selectedThisElement ($method->payment_element)) {
 
 
@@ -928,12 +610,6 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 
 		}
 
-
-
-
-
-
-
 		$this->getPaymentCurrency ($method);
 
 
@@ -943,11 +619,6 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 
 
 	}
-
-
-
-
-
 
 
 	function plgVmOnPaymentResponseReceived (&$html) {
@@ -987,11 +658,6 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 
 
 		}
-
-
-
-
-
 
 
 		VmConfig::loadJLang('com_virtuemart_orders', TRUE);
@@ -1042,16 +708,10 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 
 
 
-
-
-
-
 		if (!($virtuemart_order_id = VirtueMartModelOrders::getOrderIdByOrderNumber ($order_number))) {
 
 
-
 			return NULL;
-
 
 
 		}
@@ -1085,7 +745,6 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 		$order = $orderModel->getOrder($virtuemart_order_id);
 
 
-
 		$answerKey = vRequest::getString ('Answer', 0);
 
 		$requestKey = $_COOKIE['RequestKey'];
@@ -1093,26 +752,27 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 		$operationId = $order_number;
 
 
-
-		$connector_data = $this->createTPConnector($method);
+		require_once ('cs/TPConnector.php');
+		$tpconnector = new TPConnector();
+		$connector_data = $tpconnector->createTPConnector($method);
 
 		$connector = $connector_data['connector'];
 		$security_code = $connector_data['security'];
 		$merchant = $connector_data['merchant'];
 
-		$optionsGAA = array (     
+		$optionsGAA = array (
 
-			'Security'   => $security_code,      
-			'Merchant'   => $merchant,     
-			'RequestKey' => $requestKey,       
-                'AnswerKey'  => $answerKey // *Importante     
+			'Security'   => $security_code,
+			'Merchant'   => $merchant,
+			'RequestKey' => $requestKey,
+                'AnswerKey'  => $answerKey // *Importante
                 );
 
 
 
 
 		$rta2 = $connector->getAuthorizeAnswer($optionsGAA);
-
+		error_log("Tp - GAA: ".json_encode($rta2)."\r\n", 3, "todopago.log");
 
 
 		if ($rta2['StatusCode']== -1){
@@ -1149,29 +809,17 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 
 					require( JPATH_VM_ADMINISTRATOR . DS . 'models' . DS . 'orders.php' );
 
-
-
 				$modelOrder = new VirtueMartModelOrders();
-
 				$order['order_status'] = $new_status;
-
 				$order['virtuemart_order_id'] = $virtuemart_order_id;
-
 				$order['customer_notified'] = 1;
-
 				$order['comments'] = JTExt::sprintf($msj , $order_number);
-
-
 
 				$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, false);
 
-
-
 				$cart = VirtueMartCart::getCart ();
-
 				$cart->emptyCart();
-
-			} 
+			}
 
 		}
 
@@ -1184,40 +832,16 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 
 
 		vmdebug ('TODOPAGO plgVmOnPaymentResponseReceived', $mb_data);
-
-
-
 		$payment_name = $this->renderPluginName ($method);
 
-
-
 		$html = '';
-
-
-
 		$link=	JRoute::_("index.php?option=com_virtuemart&view=orders&layout=details&order_number=".$order['details']['BT']->order_number."&order_pass=".$order['details']['BT']->order_pass, false) ;
-
-
-
-
-
-
-
 		$html .='<br />
-
-
-
 		<a class="vm-button-correct" href="'.$link.'">'.vmText::_('COM_VIRTUEMART_ORDER_VIEW_ORDER').'</a>';
-
-
 
 		return TRUE;
 
 	}
-
-
-
-
 
 
 
@@ -1252,19 +876,13 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 		return NULL;
 	}
 
-
-
 	if (!($paymentTable = $this->getDataByOrderId ($virtuemart_order_id))) {
 
 		return NULL;
 	}
 
-
-
 	VmInfo (vmText::_ ('VMPAYMENT_TODOPAGO_PAYMENT_CANCELLED'));
-
 	$session = JFactory::getSession ();
-
 	$return_context = $session->getId ();
 
 	if (strcmp ($paymentTable->user_session, $return_context) === 0) {
@@ -1274,28 +892,27 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 	}
 
 	$virtuemart_paymentmethod_id = vRequest::getInt ('pm', 0);
-
 	if (!($method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id))) {
 
 		return NULL;
 		} // Another method was selected, do nothing
 
-
-
 		$answerKey = vRequest::getString ('Answer', 0);
 		$requestKey = $_COOKIE['RequestKey'];
 		$operationId = $order_number;
+		require_once ('cs/TPConnector.php');
+		$tpconnector = new TPConnector();
+		$connector_data = $tpconnector->createTPConnector($method);
 
-		$connector_data = $this->createTPConnector($method);
 		$connector = $connector_data['connector'];
 		$security_code = $connector_data['security'];
 		$merchant = $connector_data['merchant'];
 
-		$optionsGAA = array (     
-			'Security'   => $security_code,      
-			'Merchant'   => $merchant,     
-			'RequestKey' => $requestKey,       
-                'AnswerKey'  => $answerKey // *Importante     
+		$optionsGAA = array (
+			'Security'   => $security_code,
+			'Merchant'   => $merchant,
+			'RequestKey' => $requestKey,
+                'AnswerKey'  => $answerKey // *Importante
                 );
 
 		$rta2 = $connector->getAuthorizeAnswer($optionsGAA);
@@ -1316,7 +933,7 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 			$user =& JFactory::getUser(); 
 			$name =  $user->name;    
 
-			echo $this->addTPPrintFunction($barcode, $bartype,  $status['Operations']['AMOUNT'], $status['Operations']['OPERATIONID'], $name);
+			echo Helper::addTPPrintFunction($barcode, $bartype,  $status['Operations']['AMOUNT'], $status['Operations']['OPERATIONID'], $name);
 		}
 
 
@@ -1324,125 +941,23 @@ function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrenc
 	}
 
 
-
-	function addTPPrintFunction($text, $bartype, $amount, $orden, $name){
-
-		$logo = JURI::root()."plugins/vmpayment/todopago/logo.jpg";
-		$button = "<a  style='cursor:pointer' class='tp_print_button' onclick='tp_print_button()'>
-		<b>imprimir codigo TodoPago</b><br/><br/>
-		<img src='".$logo."' />
-		</a>";
-
-		$params = base64_encode('name='.$name.'&orden='.$orden.'&amount='.$amount.'&logo='.$logo.'&filetype=PNG&dpi=72&scale=2&rotation=0&font_family=Arial.ttf&font_size=8&text='.$text.'&thickness=30&checksum=&code='.$bartype.'');
-
-		$js = '<script type="text/javascript">
-		function tp_print_button(){
-
-			window.open("'.JURI::root().'plugins/vmpayment/todopago/cupon/print_cupon.php?params='.$params.'");
-
-		}
-		</script>';
-
-		return $button.$js;
-	}
-
-
-
-	function createTPConnector($method){
-
-		if ($method->tp_ambiente == "test"){
-
-			$todoPagoParams = '{"Authorize":"'.JURI::base()."/plugins/vmpayment/todopago/Authorize.wsdl".'", "Operations":"'.JURI::base()."/plugins/vmpayment/todopago/Operations.wsdl".'"}';
-			$end_point = 'https://developers.todopago.com.ar/services/t/1.1/';
-			$security =  $method->tp_security_code_test;
-			$merchant = $method->tp_id_site_test;
-		}
-		else{
-
-			$todoPagoParams = '{"Authorize":"'.JURI::base()."/plugins/vmpayment/todopago/Authorize.wsdl".'", "Operations":"'.JURI::base()."/plugins/vmpayment/todopago/Operations.wsdl".'"}';
-			$end_point = 'https://apis.todopago.com.ar/services/t/1.1/';
-			$security =  $method->tp_security_code_prod;
-			$merchant = $method->tp_id_site_prod;
-		}
-
-		$auth = json_decode($method->tp_auth_http, 1);
-		$todoPagoParams = json_decode($todoPagoParams, 1);
-
-		$wsdl = array();
-		$wsdl['Authorize'] = $todoPagoParams['Authorize'];
-        //$wsdl['PaymentMethods'] = $todoPagoParams['PaymentMethods'];
-		$wsdl['Operations'] = $todoPagoParams['Operations'];
-
-		$http_header = array('Authorization'=>  $auth['Authorization']);
-
-
-		$config = array_merge($wsdl, $auth ,$http_header );
-		$config[] = $end_point; 
-		$config[] = $merchant;
-		$config[] = $security;
-
-		$config_validation = true;
-
-		foreach($config as $c){
-
-			if (empty($c)){
-				$config_validation =  false;
-			}
-		}
-
-		if ($config_validation){
-
-			$connector = new TodoPago($http_header, $wsdl, $end_point);
-		}
-		else{
-			echo "FALTA CONFIGURAR PLUGIN TODOPAGO";
-
-		}
-
-
-		$return = array('connector'=>$connector, 'merchant'=>$merchant, 'security'=>$security);
-
-		return $return;
-	}
-
-
-
 	function plgVmOnPaymentNotification () {
-
-
-
-
 
 		if (!class_exists ('VirtueMartModelOrders')) {
 
-
-
 			require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
 
-
-
 		}
-
-
-
-
 
 
 
 		$mb_data = vRequest::getPost();
 
 
-
-
-
-
-
 		if (!isset($mb_data['transaction_id'])) {
 
 
-
 			return;
-
 
 
 		}
@@ -1569,8 +1084,9 @@ function plgVmOnShowOrderBEPayment ($virtuemart_order_id, $payment_method_id) {
 	if ($gettpstatus == 1){
 
 		$method = $this->getVmPluginMethod($payment_method_id);
-
-		$connector_data = $this->createTPConnector($method);
+		require_once ('cs/TPConnector.php');
+		$tpconnector = new TPConnector();
+		$connector_data = $tpconnector->createTPConnector($method);
 		$connector = $connector_data['connector'];
 		$security_code = $connector_data['security'];
 		$merchant = $connector_data['merchant'];
@@ -1653,7 +1169,7 @@ function plgVmOnShowOrderBEPayment ($virtuemart_order_id, $payment_method_id) {
 
 	</script>';
 
-	$html.=$js;       
+	$html.=$js;
 
 	return $html;
 
@@ -1674,10 +1190,7 @@ protected function checkConditions ($cart, $method, $cart_prices) {
 	$amount_cond = ($amount >= $method->min_amount AND $amount <= $method->max_amount
 
 
-
 		OR
-
-
 
 		($method->min_amount <= $amount AND ($method->max_amount == 0)));
 
@@ -1782,13 +1295,9 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 		}
 
-
-
 		$html = array();
 
 		$method_name = $this->_psType . '_name';
-
-
 
 		VmConfig::loadJLang('com_virtuemart', true);
 
@@ -1798,35 +1307,21 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 		$html = array();
 
-
-
 		foreach ($this->methods as $this->_currentMethod){
 
-
 			$methodSalesPrice = $this->setCartPrices($cart, $cart->cartPrices, $this->_currentMethod);
-
 			$this->_currentMethod->$method_name = $this->renderPluginName($this->_currentMethod);
-
 			$html = $this->getPluginHtml($this->_currentMethod, $selected, $methodSalesPrice);
 
-
-
-			
-
-			$states = $this->getTPStates();
-
+			$states = Helper::getTPStates();//$this->getTPStates();
 			$states_html = '<select name="tp_states" id="tp_states">';
-
 			foreach($states as $city => $code){
-
-
 
 				$states_html.= '<option value="'.$code.'">'.$city.'</option>';
 
-			}  	
+			}
 
 			$states_html.= '</select>';
-
 
 
 			$html .= '<br /><br />
@@ -1859,63 +1354,7 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 
 
-	function getTPStates(){
 
-
-
-		$states = array('CABA' => 'C',
-
-			'Buenos Aires'  => 'B',
-
-			'Catamarca'  => 'K',
-
-			'Chaco'  => 'H' ,
-
-			'Chubut'  => 'U',
-
-			'C&oacute;rdoba'  => 'X',
-
-			'Corrientes'  => 'W',
-
-			'Entre R&iacute;os'  => 'R',
-
-			'Formosa'  => 'P',
-
-			'Jujuy'  => 'Y',
-
-			'La Pampa'  => 'L',
-
-			'La Rioja' =>  'F',
-
-			'Mendoza' => 'M',
-
-			'Misiones'  => 'N',
-
-			'Neuqu&eacute;n'  => 'Q',
-
-			'R&iacute;o Negro'  => 'R',
-
-			'Salta'  => 'A',
-
-			'San Juan'  => 'J',
-
-			'San Luis'  => 'D',
-
-			'Santa Cruz'  => 'Z',
-
-			'Santa F&eacute;' =>  	'S',
-
-			'Santiago del Estero'  => 'G',
-
-			'Tierra del Fuego'  => 'V',
-
-			'Tucum&aacute;n'  => 'T');
-
-
-
-		return $states;        
-
-	}
 
 
 	public function plgVmonSelectedCalculatePricePayment (VirtueMartCart $cart, array &$cart_prices, &$cart_prices_name) {
@@ -1960,8 +1399,9 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 		$my_order = $order->getOrder($virtuemart_order_id);
 
 		$method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id);
-
-		$connector_data = $this->createTPConnector($method);        
+		require_once ('cs/TPConnector.php');
+		$tpconnector = new TPConnector();
+		$connector_data = $tpconnector->createTPConnector($method);
 		$connector = $connector_data['connector'];
 		$merchant = $connector_data['merchant'];
 
@@ -1970,7 +1410,7 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 		$status = $connector->getStatus($optionsGS);
 
 
-		$user =& JFactory::getUser(); 
+		$user =& JFactory::getUser();
 		$name =  $user->name;
 
 		if (!isset($status['Operations']['CARDNUMBER'])){
@@ -1994,7 +1434,7 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 						$operationid =    $status['Operations']['OPERATIONID'];
 					}
 
-					echo $js = $this->addTPPrintFunction($barcode, 'INTERLEAVED_2_OF_5',$amount, $operationid, $name);
+					echo $js = Helper::addTPPrintFunction($barcode, 'INTERLEAVED_2_OF_5',$amount, $operationid, $name);
 				}
 			}
 		}
@@ -2020,11 +1460,7 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 	function plgVmDeclarePluginParamsPaymentVM3( &$data) {
 
-
-
 		return $this->declarePluginParams('payment', $data);
-
-
 
 	}
 
@@ -2037,48 +1473,18 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 
 
-	function getTodoPagoClientIp() {
 
 
-
-		$ipaddress = '';
-
-		if ($_SERVER['HTTP_CLIENT_IP'])
-
-			$ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-
-		else if($_SERVER['HTTP_X_FORWARDED_FOR'])
-
-			$ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-
-		else if($_SERVER['HTTP_X_FORWARDED'])
-
-			$ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-
-		else if($_SERVER['HTTP_FORWARDED_FOR'])
-
-			$ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-
-		else if($_SERVER['HTTP_FORWARDED'])
-
-			$ipaddress = $_SERVER['HTTP_FORWARDED'];
-
-		else if($_SERVER['REMOTE_ADDR'])
-
-			$ipaddress = $_SERVER['REMOTE_ADDR'];
-
-		else
-
-			$ipaddress = 'UNKNOWN';
-
-		return $ipaddress;
-	}
 	private function _sanitize_string($string){
+
 		$string = htmlspecialchars_decode($string);
 
 		$re = "/\\[(.*?)\\]|<(.*?)\\>/i";
 		$subst = "";
+
 		$string = preg_replace($re, $subst, $string);
+
+		$string = preg_replace('/[\x00-\x1f]/','',$string);
 
 		$replace = array("!","'","\'","\"","  ","$","#","\\","\n","\r",
 			'\n','\r','\t',"\t","\n\r",'\n\r','&nbsp;','&ntilde;',".,",",.","+", "%");

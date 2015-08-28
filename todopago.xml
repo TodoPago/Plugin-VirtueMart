@@ -12,7 +12,7 @@
 
   <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
 
-  <version>1.0</version> 
+  <version>1.2</version> 
 
   <description><![CDATA[<a href="http://www.todopago.com.ar" target="_blank">TodoPago</a>. ]]>
 
@@ -29,7 +29,7 @@
   <filename plugin="todopago">Operations.wsdl</filename>
 
   <folder plugin="todopago">sdk</folder>
-
+  <folder plugin="todopago">cs</folder>
   <folder plugin="todopago">cupon</folder>
 
   <folder plugin="todopago">codebar</folder>
