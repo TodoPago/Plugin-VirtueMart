@@ -17,6 +17,8 @@ La versión de este plug in esta testeada en PHP 5.3-5.4-5.6, VIRTUEMART 3.0+ Y 
 
 <a name="instalacion"></a>
 ## Instalación
+Observación: Descomentar: <em>extension=php_soap.dll</em> y <em>extension=php_openssl.dll</em> del php.ini, ya que para la conexión al gateway se utiliza la clase SoapClient del API de PHP. 
+
 1.  Extensions->plugin TodoPago -> Install
 2.	Subir el archivo .zip
 3.	Extensions->Extension Manager buscar el plugin TodoPago y habilitarlo
