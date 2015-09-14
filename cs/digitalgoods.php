@@ -1,5 +1,5 @@
 <?php
-require('commons.php');
+require('Commons.php');
 class Digitalgoods extends Commons {
 
 	function getDigitalGoodsFields($data, $customFieldsModel){

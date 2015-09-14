@@ -7,7 +7,6 @@ Plug in para la integración con gateway de pago <strong>Todo Pago</strong>
 - [Instalación](#instalacion)
 - [Configuración](#configuracion)
 - [Configuración plug in](#confplugin)
-- [Datos adiccionales para prevención de fraude](#cybersource) 
 - [Carga de prouctos](#productos) 
 
 <a name="consideracionesgenerales"></a>
@@ -43,27 +42,6 @@ Al grabar dirigirse a la tab Configuration y completar los datos de conexión y 
 
 ![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/payment-methods-2.png)
 
-<a name="cybersource"></a>
-## Prevención de Fraude
-Para crear los campos adicionales para la Prevención de Fraude hay que crearlos como Custom Fields.
-Productos  -> Custom Fields <br />
-Crear el grupo TodoPago ( Field Type:  String, Custom Group: Group ) Save and Close.<br />
-Una vez creado el grupo hay que crear los campos adicionales de ese Grupo como indica la foto.<br/>
-Para crear campos de tipo lista se debe asignarle el tipo List y los valores separados por ";"
-<sub><em>Custom Fields</em></sub>
-![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/custom-fields-1.png)
-![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/custom-fields-2.png)
-
-<a name="productos"></a>
-## Productos
-Para crear o actualizar los productos hay que asigarle en la tab Custom Fields el grupo creado y completar los campos.
-<sub><em>Product Custom Fields</em></sub>
-![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/order-status.png)
- 
-<a name="ordenes"></a>
-## Ordenes
-Para obtener el status de las ordenes hay que dirigirse a  Orders -> Nro de orden y en la sección inferior de la ficha de la orden hay un botón que dice “Get TodoPago Status”, al apretarlo se muestra el detalle del status.
-![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/productos-custom-fields.png)
 
 [<sub>Volver a inicio</sub>](#inicio)
 

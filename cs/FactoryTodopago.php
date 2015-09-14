@@ -8,13 +8,13 @@ class FactoryTodopago
 		switch ('retail'){//($vertical) {
 
 		case 'retail':
-		require('retail.php');
+		require('Retail.php');
 		$retail_model = new Retail();
 		$extra_fields = $retail_model->getFields($cart, $customFieldsModel);
 		break;
 
 		case 'ticketing':
-		require('ticketing.php');
+		require('Ticketing.php');
 		$ticketing_model = new Ticketing();
 		$extra_fields = $ticketing_model->getFields($cart, $customFieldsModel);
 		break;
@@ -26,13 +26,13 @@ class FactoryTodopago
 		break;
 
 		case 'digital':
-		require('digitalgoods.php');
+		require('Digitalgoods.php');
 		$digitalgoods_model = new Digitalgoods();
 		$extra_fields = $digitalgoods_model->getFields($cart, $customFieldsModel);
 		break;
 
 		default:
-		require('retail.php');
+		require('Retail.php');
 		$retail_model = new Retail();
 		$extra_fields = $retail_model->getFields($cart, $customFieldsModel);
 		break;
