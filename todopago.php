@@ -506,7 +506,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             $categoryModel = VmModel::getModel('Category');
             $cat = $categoryModel->getCategory($prod->category, true);
             $cat_name = $cat->category_name;
-            if ($cat_name=="" or $cat_name=null){
+            if ($cat_name=="" or $cat_name==null){
                 $cat_name= "default";
             }
             $CSITPRODUCTCODE[] = $cat_name;
