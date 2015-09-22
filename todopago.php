@@ -272,16 +272,16 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
     function plgVmConfirmedOrder ($cart, $order) {
-        
+
         if (!($method = $this->getVmPluginMethod ($order['details']['BT']->virtuemart_paymentmethod_id))) {
             return NULL; // Another method was selected, do nothing
         }
-        
+
         if (!$this->selectedThisElement ($method->payment_element)) {
             return FALSE;
         }
 
-  
+
 
         $session = JFactory::getSession ();
         $return_context = $session->getId ();
@@ -424,15 +424,15 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $optionsSAR_operacion['CSMDD12'] = $method->tp_dead_line;
         $optionsSAR_operacion['CSMDD13'] = $this->_sanitize_string($cart->cartData['shipmentName']);
 
-        error_log("TP - SARcomercio - ".json_encode($optionsSAR_comercio)."\r\n", 3, "todopago.log");
-        error_log("TP - SARoperacion - ".json_encode($optionsSAR_operacion)."\r\n", 3, "todopago.log");
+        $this->logInfo("TP - SARcomercio - ".json_encode($optionsSAR_comercio), "message");
+
+        $this->logInfo("TP - SARoperacion - ".json_encode($optionsSAR_operacion), "message");
 
         $rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
-        error_log("TP - SARoperacion - ".json_encode($rta)."\r\n", 3, "todopago.log");
+
+        $this->logInfo("TP - SARoperacion - ".json_encode($rta), "message");
         if($rta["StatusCode"] == 702){
-
-            error_log("TP - SARoperacion - reintento SAR".json_encode($optionsSAR_operacion)."\r\n", 3, "todopago.log");
-
+            $this->logInfo("TP - SARoperacion - reintento SAR".json_encode($optionsSAR_operacion), "message");
             $rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
         }
 
@@ -464,7 +464,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $dbValues['security_code'] = $method->security_code;
 
-        $this->storePSPluginInternalData ($dbValues);
+        //$this->storePSPluginInternalData ($dbValues);
 
 
         $cart->_confirmDone = TRUE;
@@ -473,13 +473,15 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $cart->setCartIntoSession ();
 
-        $this->logInfo ($rta, 'ERROR');
+        $this->logInfo (json_encode($rta), 'ERROR');
 
         if ($rta['StatusCode']!= -1){
             echo "<script>alert('Su pago no puede ser procesado. Intente nuevamente más tarde')</script>";
+            $this->logInfo("TP - Redirect to: ".$rta['URL_Request'], "message");
             echo "<script>window.location.href = '".JURI::root()."index.php/cart/'</script>";
         }else{
-
+            $this->logInfo("TP - Redirect to: ".$rta['URL_Request'], "message");
+            //echo "<script>window.location.href = '".$rta['URL_Request']."'</script>";
             header('Location: '.$rta['URL_Request']);
         }
     }
@@ -611,9 +613,8 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
     function plgVmOnPaymentResponseReceived (&$html) {
-        error_log("Tp - VirtueMart vuelve a tomar en contmrol", 3, "todopago.log");
 
-
+        $this->logInfo("Tp - VirtueMart vuelve a tomar en contmrol", "message");
         if (!class_exists ('VirtueMartCart')) {
 
 
@@ -761,9 +762,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
         $rta2 = $connector->getAuthorizeAnswer($optionsGAA);
-        error_log("Tp - GAA: ".json_encode($rta2)."\r\n", 3, "todopago.log");
-
-
+        $this->logInfo("Tp - GAA: ".json_encode($rta2), "message");
         if ($rta2['StatusCode']== -1){
 
 
@@ -835,26 +834,26 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
     function plgVmOnUserPaymentCancel () {
-        
+
 
         if (!class_exists ('VirtueMartModelOrders')) {
             require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
         }
-        
+
         $tp_cart = json_decode($_SESSION['__vm']['vmcart']);
-        
+
         $vm_order = VirtueMartModelOrders::getOrderIdByOrderNumber($tp_cart->order_number);
 
         $orderModel = VmModel::getModel('orders');
         $order = $orderModel->getOrder($vm_order);
-        
+
         if($this->methods[0]->virtuemart_paymentmethod_id!=$order['details']['BT']->virtuemart_paymentmethod_id){
             return NULL;
         }
-        
+
         echo '<script>alert("Pago Cancelado: Por favor intente nuevamente")</script>';
-        
-        
+
+
         $modelOrder = new VirtueMartModelOrders();
         $order['order_status'] = 'X';
         $order['virtuemart_order_id'] = $vm_order;
@@ -862,7 +861,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $order['comments'] = JTExt::sprintf("Pago Rechazado" , $vm_order);
 
         $modelOrder->updateStatusForOneOrder($vm_order, $order, false);
-        
+
         return true;    }
 
 
@@ -930,8 +929,6 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $order = array();
 
         $error_msg = $this->_processStatus ($mb_data, $vmorder, $method);
-
-
 
         if ($error_msg) {
 
@@ -1319,7 +1316,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 	 */
 
     public function plgVmOnShowOrderFEPayment ($virtuemart_order_id, $virtuemart_paymentmethod_id, &$payment_name) {
-/*
+        /*
         $order = new VirtueMartModelOrders;
         $my_order = $order->getOrder($virtuemart_order_id);
 
