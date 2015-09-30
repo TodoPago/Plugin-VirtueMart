@@ -67,10 +67,57 @@ class plgVmpaymentTodopago extends vmPSPlugin {
     }
 
 
-
+    function getTableSQLFields () {
+        $SQLfields = array('id'                     => 'int(11) UNSIGNED NOT NULL AUTO_INCREMENT',
+            'virtuemart_order_id'    => 'int(1) UNSIGNED',
+            'order_number'           => ' char(64)',
+            'virtuemart_paymentmethod_id' => 'mediumint(1) UNSIGNED',
+            'payment_name'            => 'varchar(5000)',
+            'payment_order_total'     => 'decimal(15,5) NOT NULL DEFAULT \'0.00000\'',
+            'payment_currency'        => 'char(3) ',
+            'cost_per_transaction'    => 'decimal(10,2)',
+            'cost_percent_total'      => 'decimal(10,2)',
+            'tax_id'                  => 'smallint(1)',
+            'security_code'                  => 'varchar(100)',
+            'user_session'            => 'varchar(255)',
+            // status report data returned by TODOPAGO to the merchant
+            'mb_pay_to_email'         => 'varchar(50)',
+            'mb_pay_from_email'       => 'varchar(50)',
+            'mb_merchant_id'          => 'int(10) UNSIGNED',
+            'mb_transaction_id'       => 'varchar(15)',
+            'mb_rec_payment_id'       => 'int(10) UNSIGNED',
+            'mb_rec_payment_type'     => 'varchar(16)',
+            'mb_amount'               => 'decimal(19,2)',
+            'mb_currency'             => 'char(3)',
+            'mb_status'               => 'tinyint(1)',
+            'mb_md5sig'               => 'char(32)',
+            'mb_sha2sig'              => 'char(64)',
+            'mbresponse_raw'          => 'varchar(512)',
+                           // AMBIENTE PRODUCCION                       
+            'tp_vertical_type'    => 'varchar(100)',
+            'tp_canal_ingreso'    => 'varchar(100)',
+            'tp_endpoint_test' => 'varchar(100)',
+            'tp_wsdl_test'   => 'varchar(100)',
+            'tp_auth_http'          => 'varchar(100)',
+            'tp_dead_line'          => 'varchar(100)',
+            'tp_id_site_test'              => 'varchar(100)',
+            'tp_security_code_test'       => 'varchar(100)',
+            'tp_endpoint_prod'           => 'varchar(100)',
+            'tp_wsdl_prod'               => 'varchar(100)',
+            'tp_id_site_prod'            => 'varchar(100)',
+            'tp_security_code_prod'      => 'varchar(100)',
+            'tp_order_status_init'      =>  'varchar(100)',
+            'tp_order_status_aproved'    =>  'varchar(100)',
+            'tp_order_status_rejected'   =>  'varchar(100)',
+            'tp_order_status_offline'     => 'varchar(100)',
+            'tp_security_code_prod'      =>  'varchar(100)',    
+            'tp_ambiente'      =>  'varchar(100)'            
+            );
+return $SQLfields;
+}
     public function getVmPluginCreateTableSQL () {
 
-        return $this->createTableSQL ('Payment TODOPAGO_1 Table');
+        return $this->createTableSQL ('Payment Todopago Table');
     }
 
 
@@ -430,7 +477,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
 
-        $this->logInfo("TP - SARoperacion - ".json_encode($rta), "message");
+        $this->logInfo("TP - SAR rta - ".json_encode($rta), "message");
         if($rta["StatusCode"] == 702){
             $this->logInfo("TP - SARoperacion - reintento SAR".json_encode($optionsSAR_operacion), "message");
             $rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
@@ -464,7 +511,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $dbValues['security_code'] = $method->security_code;
 
-        //$this->storePSPluginInternalData ($dbValues);
+        $this->storePSPluginInternalData ($dbValues);
 
 
         $cart->_confirmDone = TRUE;
@@ -472,8 +519,6 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $cart->_dataValidated = TRUE;
 
         $cart->setCartIntoSession ();
-
-        $this->logInfo (json_encode($rta), 'ERROR');
 
         if ($rta['StatusCode']!= -1){
             echo "<script>alert('Su pago no puede ser procesado. Intente nuevamente más tarde')</script>";
@@ -614,7 +659,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
     function plgVmOnPaymentResponseReceived (&$html) {
 
-        $this->logInfo("Tp - VirtueMart vuelve a tomar en contmrol", "message");
+        $this->logInfo("Tp - VirtueMart vuelve a tomar en control (vuelve del formulario)", "message");
         if (!class_exists ('VirtueMartCart')) {
 
 
@@ -705,23 +750,6 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
         }
-
-
-
-
-
-        if (!($paymentTable = $this->getDataByOrderId ($virtuemart_order_id))) {
-
-
-
-            // JError::raiseWarning(500, $db->getErrorMsg());
-
-
-
-            //	return '';
-
-        }
-
 
 
         VmConfig::loadJLang('com_virtuemart');
