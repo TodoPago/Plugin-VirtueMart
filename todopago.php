@@ -1282,7 +1282,7 @@ return $SQLfields;
 
 			<td nowrapalign="left" >
 
-			<img src="'.JURI::root().'plugins/vmpayment/todopago/logo.jpg" />
+			<img src="http://www.todopago.com.ar/sites/todopago.com.ar/files/pluginstarjeta.jpg" />
 
 			<br /><br />
 
@@ -1329,7 +1329,7 @@ return $SQLfields;
     function plgVmOnCheckAutomaticSelectedPayment (VirtueMartCart $cart, array $cart_prices = array(), &$paymentCounter) {
 
 
-        return $this->onCheckAutomaticSelected ($cart, $cart_prices, $paymentCounter);
+        return 0;//$this->onCheckAutomaticSelected ($cart, $cart_prices, $paymentCounter);
 
     }
 
