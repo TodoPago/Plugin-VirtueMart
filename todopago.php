@@ -50,8 +50,8 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'tp_wsdl_test'   => array('', 'int'),
             'tp_auth_http'          => array('', 'int'),
             'tp_dead_line'          => array('', 'int'),
-            'tp_id_site_test'              => array(0, 'int'),
-            'tp_security_code_test'       => array(0, 'char'),
+            'tp_id_site_test'              => array('', 'int'),
+            'tp_security_code_test'       => array('', 'char'),
             'tp_endpoint_prod'           =>  array('', 'char'),
             'tp_wsdl_prod'               =>  array('', 'char'),
             'tp_id_site_prod'            =>  array('', 'char'),
@@ -60,11 +60,14 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'tp_order_status_aproved'    =>  array('', 'char'),
             'tp_order_status_rejected'    =>  array('', 'char'),
             'tp_order_status_offline'   =>  array('', 'char'),
-            'tp_ambiente'      =>  array('', 'char') 
+            'tp_ambiente'      =>  array('', 'char'),
+            'todopago_medios_de_pago'=> array('', 'char'),
         );
 
         $this->setConfigParameterable ($this->_configTableFieldName, $varsToPush);
     }
+
+
 
 
     function getTableSQLFields () {
@@ -93,7 +96,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'mb_md5sig'               => 'char(32)',
             'mb_sha2sig'              => 'char(64)',
             'mbresponse_raw'          => 'varchar(512)',
-                           // AMBIENTE PRODUCCION                       
+                           // AMBIENTE PRODUCCION
             'tp_vertical_type'    => 'varchar(100)',
             'tp_canal_ingreso'    => 'varchar(100)',
             'tp_endpoint_test' => 'varchar(100)',
@@ -110,11 +113,12 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'tp_order_status_aproved'    =>  'varchar(100)',
             'tp_order_status_rejected'   =>  'varchar(100)',
             'tp_order_status_offline'     => 'varchar(100)',
-            'tp_security_code_prod'      =>  'varchar(100)',    
-            'tp_ambiente'      =>  'varchar(100)'            
+            'tp_security_code_prod'      =>  'varchar(100)',
+            'tp_ambiente'      =>  'varchar(100)'
             );
 return $SQLfields;
 }
+
     public function getVmPluginCreateTableSQL () {
 
         return $this->createTableSQL ('Payment Todopago Table');
@@ -317,7 +321,6 @@ return $SQLfields;
 
     }
 
-
     function plgVmConfirmedOrder ($cart, $order) {
 
         if (!($method = $this->getVmPluginMethod ($order['details']['BT']->virtuemart_paymentmethod_id))) {
@@ -392,7 +395,8 @@ return $SQLfields;
         require_once ('cs/TPConnector.php');
         $tpconnector = new TPConnector();
         $connector_data = $tpconnector->createTPConnector($method);
-
+        $this->logInfo("tpconnector".json_encode($connector_data), "message");        
+        
         $connector = $connector_data['connector'];
         $security_code = $connector_data['security'];
         $merchant = $connector_data['merchant'];
@@ -435,6 +439,14 @@ return $SQLfields;
             'EncodingMethod' => 'XML',
 
             'Merchant' => $merchant,
+            'PUSHNOTIFYENDPOINT'=>
+                    $return_url =  JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&on=' .
+
+                        $order['details']['BT']->order_number .
+
+                        '&pm=' .
+
+                        $order['details']['BT']->virtuemart_paymentmethod_id,
 
             'URL_OK' => $return_url,
 
@@ -575,43 +587,43 @@ return $SQLfields;
 
             'CSBTCITY'=>$cart->BT['city'], //Ciudad de facturación, MANDATORIO.
 
-            'CSBTCUSTOMERID'=>$cart->user->customer_number, //Identificador del usuario al que se le emite la factura. MANDATORIO. No puede contener un correo electrónico.		
+            'CSBTCUSTOMERID'=>$cart->user->customer_number, //Identificador del usuario al que se le emite la factura. MANDATORIO. No puede contener un correo electrónico.
 
-            'CSBTIPADDRESS'=>Helper::getTodoPagoClientIp(), //IP de la PC del comprador. MANDATORIO.
+            'CSBTIPADDRESS'=>"127.0.0.1",//Helper::getTodoPagoClientIp(), //IP de la PC del comprador. MANDATORIO.
 
-            'CSBTEMAIL'=>$cart->BT['email'], //Mail del usuario al que se le emite la factura. MANDATORIO.		
+            'CSBTEMAIL'=>$cart->BT['email'], //Mail del usuario al que se le emite la factura. MANDATORIO.
 
             'EMAILCLIENTE'=>$cart->BT['email'],
 
-            'CSBTFIRSTNAME'=>$this->_sanitize_string($cart->BT['first_name']) ,//Nombre del usuario al que se le emite la factura. MANDATORIO.		
+            'CSBTFIRSTNAME'=>$this->_sanitize_string($cart->BT['first_name']) ,//Nombre del usuario al que se le emite la factura. MANDATORIO.
 
-            'CSBTLASTNAME'=>$this->_sanitize_string($cart->BT['last_name']), //Apellido del usuario al que se le emite la factura. MANDATORIO.		
+            'CSBTLASTNAME'=>$this->_sanitize_string($cart->BT['last_name']), //Apellido del usuario al que se le emite la factura. MANDATORIO.
 
-            'CSBTPHONENUMBER'=>$cart->BT['phone_1'],//, //Teléfono del usuario al que se le emite la factura. No utilizar guiones, puntos o espacios. Incluir código de país. MANDATORIO.		
+            'CSBTPHONENUMBER'=>$cart->BT['phone_1'],//, //Teléfono del usuario al que se le emite la factura. No utilizar guiones, puntos o espacios. Incluir código de país. MANDATORIO.
 
-            'CSBTPOSTALCODE'=>$cart->BT['zip'], //Código Postal de la dirección de facturación. MANDATORIO.		
+            'CSBTPOSTALCODE'=>$cart->BT['zip'], //Código Postal de la dirección de facturación. MANDATORIO.
 
-            'CSBTSTATE'=>$tp_states, //Provincia de la dirección de facturación. MANDATORIO. Ver tabla anexa de provincias.		
+            'CSBTSTATE'=>$tp_states, //Provincia de la dirección de facturación. MANDATORIO. Ver tabla anexa de provincias.
 
-            'CSBTSTREET1'=>$this->_sanitize_string($cart->BT['address_1']), //Domicilio de facturación (calle y nro). MANDATORIO.				
+            'CSBTSTREET1'=>$this->_sanitize_string($cart->BT['address_1']), //Domicilio de facturación (calle y nro). MANDATORIO.
 
-            'CSPTGRANDTOTALAMOUNT'=>number_format($cart->cartPrices['billTotal'],2,".", ""),                                 
+            'CSPTGRANDTOTALAMOUNT'=>number_format($cart->cartPrices['billTotal'],2,".", ""),
 
-            'CSITPRODUCTCODE'=>implode('#',$CSITPRODUCTCODE), 
+            'CSITPRODUCTCODE'=>implode('#',$CSITPRODUCTCODE),
 
-            'CSITPRODUCTDESCRIPTION'=> implode('#',$CSITPRODUCTDESCRIPTION), //Descripción del producto. CONDICIONAL.		
+            'CSITPRODUCTDESCRIPTION'=> implode('#',$CSITPRODUCTDESCRIPTION), //Descripción del producto. CONDICIONAL.
 
-            'CSITPRODUCTNAME'=>implode('#',$CSITPRODUCTNAME), //Nombre del producto. CONDICIONAL.		
+            'CSITPRODUCTNAME'=>implode('#',$CSITPRODUCTNAME), //Nombre del producto. CONDICIONAL.
 
-            'CSITPRODUCTSKU'=>implode('#',$CSITPRODUCTSKU), //Código identificador del producto. CONDICIONAL.		
+            'CSITPRODUCTSKU'=>implode('#',$CSITPRODUCTSKU), //Código identificador del producto. CONDICIONAL.
 
-            'CSITTOTALAMOUNT'=> implode('#',$CSITTOTALAMOUNT), //CSITTOTALAMOUNT=CSITUNITPRICE*CSITQUANTITY "999999[.CC]" Con decimales opcional usando el puntos como separador de decimales. No se permiten comas, ni como separador de miles ni como separador de decimales. CONDICIONAL.		
+            'CSITTOTALAMOUNT'=> implode('#',$CSITTOTALAMOUNT), //CSITTOTALAMOUNT=CSITUNITPRICE*CSITQUANTITY "999999[.CC]" Con decimales opcional usando el puntos como separador de decimales. No se permiten comas, ni como separador de miles ni como separador de decimales. CONDICIONAL.
 
-            'CSITQUANTITY'=>implode('#',$CSITQUANTITY), //Cantidad del producto. CONDICIONAL.		
+            'CSITQUANTITY'=>implode('#',$CSITQUANTITY), //Cantidad del producto. CONDICIONAL.
 
             'CSITUNITPRICE'=>implode('#',$CSITUNITPRICE), //Formato Idem CSITTOTALAMOUNT. CONDICIONAL.
 
-            'AMOUNT' => number_format($cart->cartPrices['billTotal'], 2, ".", "")	
+            'AMOUNT' => number_format($cart->cartPrices['billTotal'], 2, ".", "")
 
 
         );
@@ -658,6 +670,23 @@ return $SQLfields;
 
 
     function plgVmOnPaymentResponseReceived (&$html) {
+        if(isset($_GET["push_notification"])){
+              $method = $this->getVmPluginMethod ("1");
+
+              $orderModel = VmModel::getModel('orders');
+
+
+              $order['virtuemart_order_id'] = 29;
+              $order['comments'] = "SOS RE GATO! que hace gato";
+
+              $orderModel->updateStatusForOneOrder(29, $order, false);
+
+
+              var_dump($method->virtuemart_paymentmethod_id);
+              var_dump($orderModel);
+
+            die();
+        }
 
         $this->logInfo("Tp - VirtueMart vuelve a tomar en control (vuelve del formulario)", "message");
         if (!class_exists ('VirtueMartCart')) {
@@ -799,7 +828,7 @@ return $SQLfields;
 
                 $new_status = $method->tp_order_status_offline;
 
-                $msj = 'Confirmed Order';
+                $msj = '<a href="">Imprimir Cup&oacute;n</a>';
 
             }
 
@@ -832,7 +861,7 @@ return $SQLfields;
                 $order['comments'] = JTExt::sprintf($msj , $order_number);
 
                 $modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, false);
-                echo "Order id: #".$order_number;    
+                echo "Order id: #".$order_number;
                 $cart = VirtueMartCart::getCart ();
                 $cart->emptyCart();
             }
@@ -863,19 +892,17 @@ return $SQLfields;
 
     function plgVmOnUserPaymentCancel () {
 
-
         if (!class_exists ('VirtueMartModelOrders')) {
             require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
         }
 
         $tp_cart = json_decode($_SESSION['__vm']['vmcart']);
-
+      
         $vm_order = VirtueMartModelOrders::getOrderIdByOrderNumber($tp_cart->order_number);
-
         $orderModel = VmModel::getModel('orders');
         $order = $orderModel->getOrder($vm_order);
 
-        if($this->methods[0]->virtuemart_paymentmethod_id!=$order['details']['BT']->virtuemart_paymentmethod_id){
+        if($this->_vmpCtable->virtuemart_paymentmethod_id!=$order['details']['BT']->virtuemart_paymentmethod_id){
             return NULL;
         }
 
@@ -1043,7 +1070,7 @@ return $SQLfields;
 
             $optionsGS = array('MERCHANT'=> $merchant, 'OPERATIONID'=> $my_order['details']['BT']->order_number);
 
-            $status = $connector->getStatus($optionsGS);  
+            $status = $connector->getStatus($optionsGS);
 
             if (isset($status['Operations'])){
 
@@ -1066,9 +1093,9 @@ return $SQLfields;
 
                         $htmlStatus .= '</td>';
 
-                        $htmlStatus .= '</tr>';   
+                        $htmlStatus .= '</tr>';
 
-                    } 
+                    }
 
                 }
 
@@ -1102,9 +1129,9 @@ return $SQLfields;
 
         $html .= '</td>' . "\n";
 
-        $html .= '</tr>' . "\n";  
+        $html .= '</tr>' . "\n";
 
-        $html .= $htmlStatus; 
+        $html .= $htmlStatus;
 
         $html .= '</table>' . "\n";
 
@@ -1257,7 +1284,7 @@ return $SQLfields;
 
         $html = array();
 
-        foreach ($this->methods as $this->_currentMethod){
+       foreach ($this->methods as $this->_currentMethod){
 
             $methodSalesPrice = $this->setCartPrices($cart, $cart->cartPrices, $this->_currentMethod);
             $this->_currentMethod->$method_name = $this->renderPluginName($this->_currentMethod);
@@ -1275,23 +1302,14 @@ return $SQLfields;
 
 
             $html .= '<br /><br />
-
 			<table border="0" cellspacing="0" cellpadding="0" width="100%">
-
 			<tr valign="top" style="border:none">
-
 			<td nowrapalign="left" >
-
-			<img src="http://www.todopago.com.ar/sites/todopago.com.ar/files/pluginstarjeta.jpg" />
-
+			<img src="'.JURI::root().'plugins/vmpayment/todopago/logo.jpg" />
 			<br /><br />
-
 			<label for="cc_type">Elige la provincia</label>
-
 			'.$states_html.'</td>
-
 			</tr>
-
 			</table><br />';
 
             $htmla[] = $html;
@@ -1421,10 +1439,6 @@ return $SQLfields;
 
     }
 
-
-
-
-
     private function _sanitize_string($string){
 
         $string = htmlspecialchars_decode($string);
@@ -1450,5 +1464,4 @@ return $SQLfields;
 
         return $string;
     }
-
-} // end of class plgVmpaymentSkrill
+}

@@ -17,7 +17,12 @@ class TPConnector {
 			$merchant = $method->tp_id_site_prod;
 		}
 
-		$auth = json_decode($method->tp_auth_http, 1);
+		if(json_decode($method->tp_auth_http)==null){
+			$auth = array("Authorization"=>$method->tp_auth_http);
+		}else{
+			$auth = json_decode($method->tp_auth_http, 1);
+		}
+		
 		$todoPagoParams = json_decode($todoPagoParams, 1);
 
 		$wsdl = array();
