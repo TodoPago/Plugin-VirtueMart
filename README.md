@@ -1,6 +1,6 @@
 <a name="inicio"></a>
 VIRTUEMART
-============
+==========
 
 Plug in para la integración con gateway de pago <strong>Todo Pago</strong>
 - [Consideraciones Generales](#consideracionesgenerales)

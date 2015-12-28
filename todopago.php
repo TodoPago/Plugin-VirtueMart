@@ -677,7 +677,7 @@ return $SQLfields;
 
 
               $order['virtuemart_order_id'] = 29;
-              $order['comments'] = "SOS RE GATO! que hace gato";
+              $order['comments'] = "";
 
               $orderModel->updateStatusForOneOrder(29, $order, false);
 
