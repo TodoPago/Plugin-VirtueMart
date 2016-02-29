@@ -7,7 +7,6 @@ Plug in para la integración con gateway de pago <strong>Todo Pago</strong>
 - [Instalación](#instalacion)
 - [Configuración](#configuracion)
 - [Configuración plug in](#confplugin)
-- [Carga de prouctos](#productos) 
 
 <a name="consideracionesgenerales"></a>
 ## Consideraciones Generales
@@ -86,7 +85,11 @@ $currency_model = VmModel::getModel('currency');<br />
 $currency = $currency_model->getCurrency($order['details']['BT']->user_currency_id);<br />;<br />
 $countryIso = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id,'country_2_code');<br />
 $countryName = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id);<br />
+####Devoluciones
+Se pueden realizar devoluciones mediante la "Consola de Todopago", simplemente debe ingresar el monto a devolver al comprador con el siguiente formato: 1.45
 
+En caso que la devolución se realice de manera afirmativa se vera un mensaje como el detallado en la imagen siguiente, en caso contrario se podra ver el motivo del fallo.
+![imagen Payment Methods](https://github.com/TodoPago/imagenes/blob/master/virtuemart/Seleccion_004.png)
 
 ####Muy Importante
 <strong>Provincias:</strong> Al ser un campo MANDATORIO para enviar y propio del plugin este campo se completa por parte del usuario al momento del check out.
