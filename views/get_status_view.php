@@ -1,6 +1,6 @@
 <script type="text/javascript">
     
-
+   //evita el f5
     document.onkeydown = function(event){  
         if(event.keyCode==116){
             return false;            
@@ -26,9 +26,9 @@
         <td> 
             
             <?php if(gettype($value) == "array") {
-                json_encode($value);
+                echo json_encode($value);
                 }else{
-                 echo $value;   
+                 echo ($value);   
                     }?>
         </td>
     </tr>

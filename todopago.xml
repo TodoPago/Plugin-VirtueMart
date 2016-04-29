@@ -5,7 +5,7 @@
         <author>TodoPago</author>
         <authorUrl>http://www.todopago.com.ar</authorUrl>
         <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
-        <version>1.4.0</version>
+        <version>1.5.0</version>
         <description>
             <![CDATA[<a href="http://www.todopago.com.ar" target="_blank">TodoPago</a>. ]]>
         </description>
@@ -15,8 +15,7 @@
             <filename plugin="todopago">Operations.wsdl</filename>
             <folder plugin="todopago">sdk</folder>
             <folder plugin="todopago">cs</folder>
-            <folder plugin="todopago">cupon</folder>
-            <folder plugin="todopago">codebar</folder>
+            <folder plugin="todopago">views</folder>
             <filename plugin="todopago">logo.jpg</filename>
         </files>
         <languages>
@@ -24,36 +23,24 @@
         </languages>
         
         <vmconfig>
-            <fields name="params">
-               <!-- <fieldset name="basic" addfieldpath="/administrator/components/com_virtuemart/fields">
-                    <field type="vmtitle" default="Medios de pago" />
-                </fieldset>
-                
-                <fieldset name="basic" addfieldpath="/plugins/vmpayment/todopago">
-                    <field type="vmmediosdepago" name="todopago_medios_de_pago" multiple="multiple" label="Medios de Pago" />
-                </fieldset>-->
-                
+            <fields name="params">                
                 <fieldset name="basic" addfieldpath="/administrator/components/com_virtuemart/fields">
+                    
                     <field type="vmtitle" default="VMPAYMENT_TODOPAGO_ACCOUNT_PARAMS" />
+                    
                     <field type="list" name="tp_vertical_type" label="VMPAYMENT_TODOPAGO_PRODUCT" default="" description="VMPAYMENT_TODOPAGO_PRODUCT_TIP">
                         <option value="retail">VMPAYMENT_TODOPAGO_PRODUCT_ACC</option>
                         <option value="ticketing">VMPAYMENT_TODOPAGO_PRODUCT_DID</option>
                         <option value="services">VMPAYMENT_TODOPAGO_PRODUCT_GIR</option>
                         <option value="digital">VMPAYMENT_TODOPAGO_PRODUCT_IDL</option>
                     </field>
-                    <!--    <field name="tp_canal_ingreso" type="list" default="" label="VMPAYMENT_TODOPAGO_CURRENCIES_SECTION"
+                    
 
+                    <field name="tp_formulario" type="list" default="" label="VMPAYMENT_TODOPAGO_FORMULARIO" description="VMPAYMENT_TODOPAGO_FORMULARIO_TIP">
+                        <option value="0">Redireccion</option>
+                        <option value="1">Formulario Integrado</option>
+                    </field>
 
-
-                       description="VMPAYMENT_TODOPAGO_CURRENCY_DESC">
-
-                        <option value="web">web</option>
-
-                        <option value="mobile">Mobile</option>
-
-                        <option value="tel">Telefonica</option>
-
-                      </field>-->
                     <field name="tp_ambiente" type="list" default="" label="VMPAYMENT_TODOPAGO_AMBIENTE" description="VMPAYMENT_TODOPAGO_AMBIENTE_TIP">
                         <option value="test">developers</option>
                         <option value="prod">Produccion</option>
@@ -61,25 +48,15 @@
                     <field name="tp_auth_http" type="text" label="VMPAYMENT_TODOPAGO_MIN_AMOUNT" description="VMPAYMENT_TODOPAGO_MIN_AMOUNT_TIP" />
                     <field name="tp_dead_line" type="text" label="VMPAYMENT_TODOPAGO_DEAD_LINE" description="VMPAYMENT_TODOPAGO_DEAD_LINE_TIP" />
                     <field type="vmtitle" default="VMPAYMENT_TODOPAGO_CONFIG_TEST" description="" />
-                    <!--<field name="tp_endpoint_test" type="text" label="VMPAYMENT_TODOPAGO_COST_PER_TRANSACTION"
-
-                    description="VMPAYMENT_TODOPAGO_COST_PER_TRANSACTION_TIP"/>-->
-                    <!-- <field name="tp_wsdl_test" type="text" label="VMPAYMENT_TODOPAGO_WSDL_TEST"
-
-                   description="VMPAYMENT_TODOPAGO_WSDL_TEST_TIP"/>-->
+                    
                     <field name="tp_id_site_test" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_ID_SITE" description="VMPAYMENT_TODOPAGO_ID_SITE_TIP" />
                     <field name="tp_security_code_test" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_SECURITY_CODE" description="VMPAYMENT_TODOPAGO_SECURITY_CODE_TIP" />
                     <field type="vmtitle" default="VMPAYMENT_TODOPAGO_DEBUG_SECTION" description="" />
-                    <!--<field name="tp_endpoint_prod" type="text" label="VMPAYMENT_TODOPAGO_ENDPOINT_PROD"
-
-                           description="VMPAYMENT_TODOPAGO_ENDPOINT_PROD"/>
-
-                    <field name="tp_wsdl_prod" type="text" label="VMPAYMENT_TODOPAGO_WSDL_PROD"
-
-                     description="VMPAYMENT_TODOPAGO_WSDL_TIP_PROD"/>-->
+                    
                     <field name="tp_id_site_prod" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_IDSITE_PROD" description="VMPAYMENT_TODOPAGO_IDSITE_PROD_TIP" />
                     <field name="tp_security_code_prod" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_SECURITY_CODE_PROD" description="VMPAYMENT_TODOPAGO_SECURITY_CODE_PROD_TIP" />
                     <!-- /AMBIENTE PRODUCCION -->
+                    
                     <!-- ORDER STATUS -->
                     <field type="vmtitle" default="VMPAYMENT_TODOPAGO_ESTADOS_PEDIDOS" description="" />
                     <field name="tp_order_status_init" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_ESTADOS_PEDIDOS_INICIADA" />

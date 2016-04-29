@@ -6,7 +6,17 @@ Plug in para la integración con gateway de pago <strong>Todo Pago</strong>
 - [Consideraciones Generales](#consideracionesgenerales)
 - [Instalación](#instalacion)
 - [Configuración](#configuracion)
-- [Configuración plug in](#confplugin)
+ - [Configuración plug in](#confplugin)
+ - [Formulario Hibrido](#formHibrido)
+ - [Nuevas columnas y atributos](#tca)
+- [Prevencion de Fraude](#cybersource)
+ - [Consideraciones generales](#cons_generales)
+ - [Datos adiccionales para prevención de fraude](#prevfraudedatosadicionales) 
+- [Características](#features) 
+ - [Consulta de transacciones](#constrans)
+ - [Devoluciones](#devoluciones)
+- [Tablas de referencia](#tablas)
+- [Versiones disponibles](#availableversions)
 
 <a name="consideracionesgenerales"></a>
 ## Consideraciones Generales
@@ -41,50 +51,55 @@ Al grabar dirigirse a la tab Configuration y completar los datos de conexión y 
 
 ![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/payment-methods-2.png)
 
+[Formulario Hibrido](#formHibrido).
+<a name="formHibrido"></a>
+####Formulario Híbrido
+En la versión 1.7 del Plugin se incluyen dos tipos de formularios de pago, redirección y Formulario Híbrido (embebido en el e commerce). Para utilizar este último se debe seleccionar Híbrido en la configuración geneeral delPlugin. 
+![imagen de solapas de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/Selecci%C3%B3n_019.png)
 
 [<sub>Volver a inicio</sub>](#inicio)
 
-####Consideraciones Generales (para todos los verticales, por defecto RETAIL)
+<a name="tca"></a>
+[Nuevas columnas y atributos](#tca)
+Al instalar el PlugIn se creara automáticamente la tabla (prefix)_virtuemart_payment_plg_todopago, para uso internos del mismo.
+
+[Prevencion de Fraude](#cybersource)
+<a name="cybersource"></a>
+###Consideraciones Generales (para todos los verticales, por defecto RETAIL)
 El plug in, toma valores est&aacute;ndar del framework para validar los datos del comprador.
 Para acceder a los datos de TodoPago se utilizar el objeto $method que se puede crear de la forma: $method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id).
 <br />
 Para acceder a los datos del vendedor, productos y carrito se usan los objetos $cart y $order que llegan como parámetro en los métodos en los que se necesitan. 
 <br />
-Este es un ejemplo de la mayoría de los campos que se necesitan para comenzar la operación <br />
-<br />
+```php
 'CSBTCITY'=>$cart->BT['city'], //Ciudad de facturación, MANDATORIO.		
-<br />
-'CSBTCUSTOMERID'=>$cart->user->customer_number, 
-<br />
+'CSBTCUSTOMERID'=>$cart->user->customer_number,
 'CSBTIPADDRESS'=>$this->getTodoPagoClientIp(),	
-<br />
 'CSBTEMAIL'=>$cart->BT['email'], 	
-<br />
 'CSBTFIRSTNAME'=>$cart->BT['first_name'] ,		
-<br />
 'CSBTLASTNAME'=>$cart->BT['last_name'], 		
-<br />
 'CSBTPHONENUMBER'=>$cart->BT['phone_1'],		
-<br />
 'CSBTPOSTALCODE'=>$cart->BT['zip'], 
-<br />
 'CSBTSTATE'=>$this->tp_states, 
-<br />
-'CSBTSTREET1'=>$cart->BT['address_1'], 
-<br />
+'CSBTSTREET1'=>$cart->BT['address_1'],
 'CSPTGRANDTOTALAMOUNT'=>$cart->cartPrices['billTotal'],                                 
-<br />
 'AMOUNT' => $cart->cartPrices['billTotal']	
-
-<br />
+```
 Los únicos modelos que tenemos que incluir para obtener los datos restantes son 'Customfields', 'currency' e invocar a los métodos staticos de la clase ShopFunctions.<br />
 
-$customFieldsModel = VmModel::getModel ('Customfields');<br />
-$customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);    <br />   <br />
-$currency_model = VmModel::getModel('currency');<br />
-$currency = $currency_model->getCurrency($order['details']['BT']->user_currency_id);<br />;<br />
-$countryIso = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id,'country_2_code');<br />
-$countryName = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id);<br />
+```php
+$customFieldsModel = VmModel::getModel ('Customfields');
+$customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id); 
+$currency_model = VmModel::getModel('currency');
+$currency = $currency_model->getCurrency($order['details']['BT']->user_currency_id);<br />;
+$countryIso = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id,'country_2_code');
+$countryName = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id);
+```
+<a name="constrans"></a>
+####Consulta de Transacciones
+Las consultas On Line de las transacciones se realizan ingresando a la orden. En el recuadro "Consola TodoPago".
+
+<a name="devoluciones"></a>
 ####Devoluciones
 Se pueden realizar devoluciones mediante la "Consola de Todopago", simplemente debe ingresar el monto a devolver al comprador con el siguiente formato: 1.45
 
