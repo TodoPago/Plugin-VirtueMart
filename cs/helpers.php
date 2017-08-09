@@ -135,6 +135,8 @@ return $button.$js;
 			'tp_endpoint_test' => 'varchar(100)',
 			'tp_wsdl_test'   => 'varchar(100)',
 			'tp_auth_http'          => 'varchar(100)',
+			'tp_auth_http_test'          => 'varchar(100)',
+			'tp_auth_http_prod'          => 'varchar(100)',
 			'tp_dead_line'          => 'varchar(100)',
 			'tp_id_site_test'              => 'varchar(100)',
 			'tp_security_code_test'       => 'varchar(100)',

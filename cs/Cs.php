@@ -31,7 +31,7 @@ abstract class Cs {
 			$payDataOperacion ['CSBTCUSTOMERID']= "guest".date("ymdhs");
 		}
 		Mage::log(" CSBTIPADDRESS - ip de la pc del comprador");
-		$payDataOperacion ['CSBTIPADDRESS'] = $this->getField($this->order->getRemoteIp());
+		$payDataOperacion ['CSBTIPADDRESS'] = ($this->get_the_user_ip() == '::1') ? '127.0.0.1' : $this->get_the_user_ip();
 		Mage::log(" CSBTEMAIL - email del usuario al que se le emite la factura");
 		$payDataOperacion ['CSBTEMAIL'] = $this->getField($billingAdress->getEmail());
 		Mage::log(" CSBTFIRSTNAME - nombre de usuario el que se le emite la factura");
@@ -42,7 +42,7 @@ abstract class Cs {
 		$payDataOperacion ['CSBTPOSTALCODE'] = $this->getField($billingAdress->getPostcode());
 		Mage::log(" CSBTPHONENUMBER - Tel�fono del usuario al que se le emite la factura. No utilizar guiones, puntos o espacios. Incluir c�digo de pa�s");
 		$payDataOperacion ['CSBTPHONENUMBER'] = $this->getField($billingAdress->getTelephone());
-		Mage::log(" CSBTSTATE - Provincia de la direcci�n de facturaci�n (hay que cambiar esto!!! por datos hacepatdos por el gateway)");
+		
 		$payDataOperacion ['CSBTSTATE'] =  strtoupper(substr($this->getField($billingAdress->getRegion()),0,1));
 		Mage::log(" CSBTSTREET1 - Domicilio de facturaci�n (calle y nro)");
 		$payDataOperacion ['CSBTSTREET1'] = $this->getField($billingAdress->getStreet1());
@@ -168,6 +168,20 @@ abstract class Cs {
 		}
 
 		return $return;
+	}
+
+
+	public function get_the_user_ip() {
+		if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
+			//check ip from share internet
+			$ip = $_SERVER['HTTP_CLIENT_IP'];
+		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			//to check ip is pass from proxy
+			$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+		} else {
+			$ip = $_SERVER['REMOTE_ADDR'];
+		}
+		return $ip;
 	}
 
 	protected abstract function getCategoryArray($productId);

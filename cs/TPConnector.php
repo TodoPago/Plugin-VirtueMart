@@ -1,24 +1,16 @@
 <?php
+use TodoPago\Sdk as Sdk;
+
+require_once (dirname(__FILE__) . '/../vendor/autoload.php');
+
 class TPConnector {
 	function createTPConnector($method){
 		
-		if ($method->tp_ambiente == "test"){
+		$mode = $method->tp_ambiente;
+		$security = $method->{tp_security_code_.$mode};
+		$merchant = $method->{tp_id_site_.$mode};
+		$auth = (json_decode($method->{tp_auth_http_.$mode})==null)? array("Authorization"=>$method->{tp_auth_http_.$mode}):$auth = json_decode($method->{tp_auth_http_.$mode}, 1);
 
-			$security =  $method->tp_security_code_test;
-			$merchant = $method->tp_id_site_test;
-		}
-		else{
-
-			$security =  $method->tp_security_code_prod;
-			$merchant = $method->tp_id_site_prod;
-		}
-
-		if(json_decode($method->tp_auth_http)==null){
-			$auth = array("Authorization"=>$method->tp_auth_http);
-		}else{
-			$auth = json_decode($method->tp_auth_http, 1);
-		}
-		
 		$http_header = array('Authorization'=>  $auth['Authorization']);
 		
 		$config[] = $http_header;
@@ -36,7 +28,7 @@ class TPConnector {
 
 		if ($config_validation){
 
-			$connector = new Sdk($http_header, $method->tp_ambiente);
+			$connector = new Sdk($http_header, $mode);
 		}
 		else{
 			return null;

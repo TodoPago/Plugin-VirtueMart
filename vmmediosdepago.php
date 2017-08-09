@@ -2,14 +2,17 @@
 
 defined('_JEXEC') or die;
 
-require_once('sdk/Sdk.php');
+use TodoPago\Sdk as Sdk;
+require_once (dirname(__FILE__) . '/vendor/autoload.php');
+//require_once('sdk/Sdk.php');
 
 jimport('joomla.html.html');
 jimport('joomla.form.formfield');
 jimport('joomla.form.helper');
 JFormHelper::loadFieldClass('list');
 
-require_once ("sdk/Sdk.php");
+//require_once ("sdk/Sdk.php");
+
 
 class JFormFieldVmMediosdepago extends JFormFieldList {
 
@@ -21,9 +24,11 @@ class JFormFieldVmMediosdepago extends JFormFieldList {
 
 		$options = array();
 
-		$pipi = new Sdk ($this->get_http_header(), $this->get_ambiente());
+		$mode = $this->get_mode();
+		$http_header = $this->get_http_header($mode); 
+		$tp_connector = new Sdk ($http_header, $mode);
 
-		$payment_method = $pipi->discoverPaymentMethods();
+		$payment_method = $tp_connector->discoverPaymentMethods();
 		$payment_method_array = $payment_method['PaymentMethod'];
 
 		foreach ($payment_method_array as $key => $value) {
@@ -35,39 +40,39 @@ class JFormFieldVmMediosdepago extends JFormFieldList {
 	}
 
 
-	private function get_ambiente()
+	private function get_mode()
 	{
-		$esta = $this->_get_settings();
-		$esta = $esta['tp_ambiente'];
-		return json_decode($esta);
+		$tp_config = $this->_get_settings();
+		$tp_config = $tp_config['tp_ambiente'];
+		return json_decode($tp_config);
 		
 	}
 
-	private function get_http_header()
+	private function get_http_header($mode)
 	{
-		$esta = $this->_get_settings();
-		$esta = $esta['tp_auth_http'];
-		return ((array)(json_decode(json_decode($esta))));
+		$tp_config = $this->_get_settings();
+		$tp_config = $tp_config['tp_auth_http_'.$mode];
+		return ((array)(json_decode(json_decode($tp_config))));
 		
 	}
 
 	private function _get_settings()
 	{
-				// Get a db connection.
+		// Get a db connection.
 		$db = JFactory::getDbo();
 
-// Create a new query object.
+		// Create a new query object.
 		$query = $db->getQuery(true);
 
-// Select all records from the user profile table where key begins with "custom.".
-// Order it by the ordering field.
+		// Select all records from the user profile table where key begins with "custom.".
+		// Order it by the ordering field.
 		$query->select($db->quoteName(array('payment_params')));
 		$query->from($db->quoteName('#__virtuemart_paymentmethods'));
 		$query->where($db->quoteName('payment_element')."=".$db->quote('todopago'));
 		// Reset the query using our newly populated query object.
 		$db->setQuery($query);
 
-// Load the results as a list of stdClass objects (see later for more options on retrieving data).
+		// Load the results as a list of stdClass objects (see later for more options on retrieving data).
 		$payment_element = $db->loadObjectList()[0]->payment_params;
 		
 		$my_settings_array = array();

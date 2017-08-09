@@ -14,15 +14,19 @@
 *
 * http://virtuemart.org
 */
+use TodoPago\Sdk as Sdk;
 
 defined ('_JEXEC') or die('Restricted access');
 
 if (!class_exists ('vmPSPlugin')) {
     require(JPATH_VM_PLUGINS . DS . 'vmpsplugin.php');
 }
-
-require('sdk/Sdk.php');
+require_once (dirname(__FILE__) . '/vendor/autoload.php');
+//require('sdk/Sdk.php');
 require ('cs/helpers.php');
+
+require_once ('cs/TPConnector.php');
+require_once ('cs/StatusCodeCS.php');
 
 class plgVmpaymentTodopago extends vmPSPlugin {
 
@@ -49,6 +53,8 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'tp_endpoint_test' => array('', 'int'),
             'tp_wsdl_test'   => array('', 'int'),
             'tp_auth_http'          => array('', 'int'),
+            'tp_auth_http_test'          => array('', 'int'),
+            'tp_auth_http_prod'          => array('', 'int'),
             'tp_dead_line'          => array('', 'int'),
             'tp_id_site_test'              => array('', 'int'),
             'tp_security_code_test'       => array('', 'char'),
@@ -63,9 +69,90 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'tp_ambiente'      =>  array('', 'char'),
             'todopago_medios_de_pago'=> array('', 'char'),
             'tp_formulario'=>array('', 'char'),
+            'tp_cuotas_enabled'  => array('', 'int'),
+            'tp_cuotas'=>array('', 'char'),
+            'tp_form_timeout_enabled'=>array('', 'int'),
+            'tp_form_timeout'       => array('', 'int'),
+            'tp_emptycart_enabled'       => array('', 'int'),
+            
+
         );
 
         $this->setConfigParameterable ($this->_configTableFieldName, $varsToPush);
+
+        $app = JFactory::getApplication();    
+        $view = (isset($_GET['view']))?$_GET['view']:'';
+        if($app->isAdmin() && $this->isTodopagoPaymentPage($view) ){
+            $this->display_btn_credentials();    
+        }
+
+        $this->tpFinancialCost($view);
+
+    }
+
+    function tpFinancialCost($view){
+
+        if ($view != 'orders') return false;
+           
+        $order_number = $_REQUEST['order_number'];
+        if(!isset($order_number)) return false;
+
+        try{
+            $db = JFactory::getDbo();
+            
+        }catch (Exception $e)
+        {
+            $this->setError($e->getMessage());
+            return false;
+        }
+         
+        
+        $query = $db->getQuery(true);    
+//        $query->select($db->quoteName(array('order_number','order_total')));
+        $query->select($db->quoteName(array('*')));
+        $query->from($db->quoteName('#__virtuemart_orders'));
+        $query->where($db->quoteName('order_number') . "='" .$order_number ."'");
+        // Reset the query using our newly populated query object.
+        $db->setQuery($query);
+
+        // Load the results as a list of stdClass objects (see later for more options on retrieving data).
+        $order_result = $db->loadObjectList();
+        $value = $order_result['0']->order_total;
+        $virtuemart_order_id = $order_result['0']->virtuemart_order_id;      
+        $payment_method_id = $order_result['0']->virtuemart_paymentmethod_id;
+    
+        $order = new VirtueMartModelOrders;
+        $my_order = $order->getOrder($virtuemart_order_id);
+
+        $method = $this->getVmPluginMethod($payment_method_id);
+
+        require_once ('cs/TPConnector.php');
+
+        $tpconnector = new TPConnector();
+        $connector_data = $tpconnector->createTPConnector($method);
+     
+        $connector = $connector_data['connector'];
+        $security_code = $connector_data['security'];
+        $merchant = $connector_data['merchant'];
+        $optionsGS = array('MERCHANT'=> $merchant, 'OPERATIONID'=> $order_number);
+        
+        $status = $connector->getStatus($optionsGS);
+
+        return $result;
+    }
+
+
+    function isTodopagoPaymentPage($view){
+        $model = VmModel::getModel('paymentmethod');
+        $payment = $model->getPayment();
+        return (strtolower($payment->slug)=='todopago' && $view=='paymentmethod' )?true:false;
+    }
+
+
+    function getConnector($virtuemart_paymentmethod_id=2){
+        $method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id);
+        $tpconnector = new TPConnector();
+        return $tpconnector->createTPConnector($method);
     }
 
     function getTableSQLFields () {
@@ -100,6 +187,8 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'tp_endpoint_test' => 'varchar(100)',
             'tp_wsdl_test'   => 'varchar(100)',
             'tp_auth_http'          => 'varchar(100)',
+            'tp_auth_http_test'          => 'varchar(100)',
+            'tp_auth_http_prod'          => 'varchar(100)',
             'tp_dead_line'          => 'varchar(100)',
             'tp_id_site_test'              => 'varchar(100)',
             'tp_security_code_test'       => 'varchar(100)',
@@ -119,21 +208,18 @@ class plgVmpaymentTodopago extends vmPSPlugin {
     }
 
     public function getVmPluginCreateTableSQL () {
-
         return $this->createTableSQL ('Payment Todopago Table');
     }
 
 
 
     function _getTODOPAGOURL ($method) {
-
         $url = 'www.todopago.com';
         return $url;
     }
 
 
     function _processStatus (&$mb_data, $vmorder, $method) {
-
 
         switch ($mb_data['status']) {
 
@@ -181,7 +267,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
     function _getPaymentResponseHtml ($paymentTable, $payment_name) {
-
+  
         VmConfig::loadJLang('com_virtuemart');
 
         $html = '<table>' . "\n";
@@ -285,7 +371,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
     function _parse_response ($response) {
-
+ 
         $matches = array();
         $rlines = explode ("\r\n", $response);
 
@@ -306,10 +392,11 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
     function plgVmOnShowOrderPaymentBE($virtuemart_order_id, $paymethod_id){
-
+        
     }
 
     function plgVmConfirmedOrder ($cart, $order) {
+        
 
         if (!($method = $this->getVmPluginMethod ($order['details']['BT']->virtuemart_paymentmethod_id))) {
             return NULL; // Another method was selected, do nothing
@@ -367,15 +454,14 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             return FALSE;
         }
 
-
         $lang = JFactory::getLanguage ();
         $tag = substr ($lang->get ('tag'), 0, 2);
-
 
         $post_variables = array();
         require_once ('cs/TPConnector.php');
         $tpconnector = new TPConnector();
         $connector_data = $tpconnector->createTPConnector($method);
+
         $this->logInfo("tpconnector".json_encode($connector_data), "message");        
         
         $connector = $connector_data['connector'];
@@ -396,7 +482,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         '&lang='.vRequest::getCmd('lang','');
 
-
+    $Error_message = ( isset($_GET['Error']))? $_GET['Error']: 'El pago no pudo ser realizado';
 
         $cancel_url = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginUserPaymentCancel&on=' .
 
@@ -407,7 +493,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $order['details']['BT']->virtuemart_paymentmethod_id .
 
         '&Itemid=' . vRequest::getInt ('Itemid') .
-        '&lang='.vRequest::getCmd('lang','');
+        '&lang='.vRequest::getCmd('lang','') . '&Error='. $Error_message;
 
 
         $status_url  = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&lang='.vRequest::getCmd('lang','');
@@ -434,7 +520,9 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $customFieldsModel = VmModel::getModel ('Customfields');
 
-        $optionsSAR_operacion = $this->getCommonFields($cart, $customFieldsModel, $this->tp_states);
+        $state_2_code = ShopFunctions::getStateByID($order['details']['BT']->virtuemart_state_id,'state_2_code');
+        $stateIso = $state_2_code[0];
+        $optionsSAR_operacion = $this->getCommonFields($cart, $customFieldsModel, $stateIso);
 
         $currency_model = VmModel::getModel('currency');
         $currency = $currency_model->getCurrency($order['details']['BT']->user_currency_id);
@@ -442,7 +530,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $countryIso = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id,'country_2_code');
         $countryName = ShopFunctions::getCountryByID($order['details']['BT']->virtuemart_country_id);
-
+        
         $extra_fields = array();
 
         require('cs/FactoryTodopago.php');
@@ -456,10 +544,16 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $optionsSAR_operacion['OPERATIONID'] = $order['details']['BT']->order_number;
         $optionsSAR_operacion['CSBTCOUNTRY'] = $countryIso;
         $optionsSAR_operacion['CSMDD9'] = JFactory::getUser()->password;
-        $optionsSAR_operacion['CSSTSTATE'] = $this->tp_states;
+        $optionsSAR_operacion['CSSTSTATE'] = $stateIso;
         $optionsSAR_operacion['CSSTCOUNTRY'] = $countryIso;
         $optionsSAR_operacion['CSMDD12'] = $method->tp_dead_line;
         $optionsSAR_operacion['CSMDD13'] = $this->_sanitize_string($cart->cartData['shipmentName']);
+        if(isset($method->tp_cuotas_enabled) && $method->tp_cuotas_enabled==1 ){
+            $optionsSAR_operacion['MAXINSTALLMENTS'] = $method->tp_cuotas;
+        }
+        if(isset($method->tp_form_timeout_enabled) && $method->tp_form_timeout_enabled==1 ){
+            $optionsSAR_operacion['TIMEOUT'] = $method->tp_form_timeout;
+        }
 
         $this->logInfo("TP - SARcomercio - ".json_encode($optionsSAR_comercio), "message");
 
@@ -474,13 +568,10 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             $this->logInfo(json_encode($e), "message");
         }
 
+
         $this->logInfo("TP - SAR rta - ".json_encode($rta), "message");
         
-        if($rta["StatusCode"] == 702){
-            $this->logInfo("TP - SARoperacion - reintento SAR".json_encode($optionsSAR_operacion), "message");
-            $rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
-        }
-
+  
         setcookie('RequestKey',$rta["RequestKey"],  time() + (86400 * 30), "/");
         $session = JFactory::getSession ();
         $return_context = $session->getId ();
@@ -508,7 +599,10 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $cart->setCartIntoSession ();
 
         if ($rta['StatusCode']!= -1){
-            echo "<script>alert('Su pago no puede ser procesado. Intente nuevamente más tarde')</script>";
+            echo "<script>
+                    console.log('".$statusMessage."');
+                    alert('Su pago no puede ser procesado. Intente nuevamente más tarde. ".$statusMessage."');
+                  </script>";
             $this->logInfo("TP - Redirect to: ".$rta['URL_Request'], "message");
          
             echo "<script>window.location.href = '".JURI::root()."index.php/cart/'</script>";
@@ -563,6 +657,11 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             $CSITPRODUCTCODE[] = $cat_name;
 
             $product_description = $this->_sanitize_string(trim(urlencode(htmlentities(strip_tags($prod->product_desc)))));
+            
+            if (empty($product_description)){
+                $product_description =  $this->_sanitize_string(trim(urlencode(htmlentities(strip_tags($prod->product_s_desc)))));
+            }
+
             $CSITPRODUCTDESCRIPTION[] = substr($product_description, 0, 10);
             $CSITPRODUCTNAME[] =  trim(urlencode(htmlentities(strip_tags($prod->product_name))));
             $CSITPRODUCTSKU[] = $prod->product_sku;
@@ -570,7 +669,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             $CSITQUANTITY[] = intval($prod->amount);
             $CSITUNITPRICE[] = number_format($prod->prices['salesPrice'],2,".","");
 
-            $customfields = $customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);
+//            $customfields = $customFieldsModel->getCustomEmbeddedProductCustomFields($prod->virtuemart_product_id);
         }
 
         /** COMMON FIELDS **/
@@ -579,7 +678,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
             'CSBTCITY'=>$cart->BT['city'], //Ciudad de facturación, MANDATORIO.
             'CSBTCUSTOMERID'=>$cart->user->customer_number, //Identificador del usuario al que se le emite la factura. MANDATORIO. No puede contener un correo electrónico.
-            'CSBTIPADDRESS'=>"127.0.0.1", //Helper::getTodoPagoClientIp(), //IP de la PC del comprador. MANDATORIO.
+            'CSBTIPADDRESS'=>($this->get_the_user_ip() == '::1') ? '127.0.0.1' : $this->get_the_user_ip(), //Helper::getTodoPagoClientIp(), //IP de la PC del comprador. MANDATORIO.
             'CSBTEMAIL'=>$cart->BT['email'], //Mail del usuario al que se le emite la factura. MANDATORIO.
             'EMAILCLIENTE'=>$cart->BT['email'],
             'CSBTFIRSTNAME'=>$this->_sanitize_string($cart->BT['first_name']) ,//Nombre del usuario al que se le emite la factura. MANDATORIO.
@@ -609,7 +708,6 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
     function plgVmgetPaymentCurrency ($virtuemart_paymentmethod_id, &$paymentCurrencyId) {
 
-
         if (!($method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id))) {
 
             return NULL;
@@ -631,76 +729,68 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
 
     function plgVmOnPaymentResponseReceived (&$html) {
-       
+
         if(isset($_GET["push_notification"])){
           $method = $this->getVmPluginMethod ("1");
 
 
           $orderModel = VmModel::getModel('orders');
 
-   $order['virtuemart_order_id'] = 29;
+          $order['virtuemart_order_id'] = 29;
           $order['comments'] = "";
 
           $orderModel->updateStatusForOneOrder(29, $order, false);
 
+        }
 
-          var_dump($method->virtuemart_paymentmethod_id);
-          var_dump($orderModel);
+        $this->logInfo("Tp - VirtueMart vuelve a tomar en control (vuelve del formulario)", "message");
 
-          die();
-      }
+        if (!class_exists ('VirtueMartCart')) {
+            require(VMPATH_SITE . DS . 'helpers' . DS . 'cart.php');
 
-      $this->logInfo("Tp - VirtueMart vuelve a tomar en control (vuelve del formulario)", "message");
-      if (!class_exists ('VirtueMartCart')) {
-
-
-        require(VMPATH_SITE . DS . 'helpers' . DS . 'cart.php');
+        }
 
 
 
-    }
+        if (!class_exists ('shopFunctionsF')) {
 
 
 
-    if (!class_exists ('shopFunctionsF')) {
+            require(VMPATH_SITE . DS . 'helpers' . DS . 'shopfunctionsf.php');
 
 
 
-        require(VMPATH_SITE . DS . 'helpers' . DS . 'shopfunctionsf.php');
+        }
 
 
 
-    }
+        if (!class_exists ('VirtueMartModelOrders')) {
+
+            require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
 
 
 
-    if (!class_exists ('VirtueMartModelOrders')) {
-
-        require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
+        }
 
 
-
-    }
-
-
-    VmConfig::loadJLang('com_virtuemart_orders', TRUE);
+        VmConfig::loadJLang('com_virtuemart_orders', TRUE);
 
 
 
-    $mb_data = vRequest::getPost();
+        $mb_data = vRequest::getPost();
 
         // the payment itself should send the parameter needed.
 
 
-    $virtuemart_paymentmethod_id = vRequest::getInt ('pm', 0);
+        $virtuemart_paymentmethod_id = vRequest::getInt ('pm', 0);
 
 
 
-    $order_number = vRequest::getString ('on', 0);
+        $order_number = vRequest::getString ('on', 0);
 
 
 
-    if (!($method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id))) {
+        if (!($method = $this->getVmPluginMethod ($virtuemart_paymentmethod_id))) {
 
 
 
@@ -756,25 +846,25 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'AnswerKey'  => $answerKey // *Importante
             );
 
+        $this->logInfo("Tp - GAA REQUEST : ".json_encode($optionsGAA), "message");
 
         $rta2 = $connector->getAuthorizeAnswer($optionsGAA);
+    
         $this->logInfo("Tp - GAA: ".json_encode($rta2), "message");
-        if ($rta2['StatusCode']== -1){
 
-            if ($rta2['Payload']['Answer']['PAYMENTMETHODNAME']== 'PAGOFACIL' || $rta2['Payload']['Answer']['PAYMENTMETHODNAME']== 'RAPIPAGO' ){
-
-                $new_status = $method->tp_order_status_offline;
-
-                $msj = '<a href="">Imprimir Cup&oacute;n</a>';
-
+            if ($method->tp_emptycart_enabled){
+                $cart = VirtueMartCart::getCart();
+                $cart->emptyCart();
             }
 
-            else{
 
+        if ($rta2['StatusCode']== -1){
+            if ($rta2['Payload']['Answer']['PAYMENTMETHODNAME']== 'PAGOFACIL' || $rta2['Payload']['Answer']['PAYMENTMETHODNAME']== 'RAPIPAGO' ){
+                $new_status = $method->tp_order_status_offline;
+                $msj = '<a href="">Imprimir Cup&oacute;n</a>';
+            } else {
                 $new_status = $method->tp_order_status_aproved;
-
                 $msj = $rta2['StatusMessage'];
-
             }
 
 
@@ -794,14 +884,44 @@ class plgVmpaymentTodopago extends vmPSPlugin {
                 echo "Order id: #".$order_number;
                 $cart = VirtueMartCart::getCart ();
                 $cart->emptyCart();
+
+        $total_cost = $rta2['Payload']['Request']['AMOUNTBUYER'];
+        $value = $rta2['Payload']['Request']['AMOUNT'];
+        $tax = $total_cost - $value;
+        
+        $db = JFactory::getDbo();
+        $query2 = $db->getQuery(true);
+
+        // Fields to update.
+        $fields = array(
+            $db->quoteName('order_total') . ' = ' . $total_cost,
+            $db->quoteName('order_payment') . ' = ' . $tax
+        );
+         
+        // Conditions for which records should be updated.
+        $conditions = array(
+            $db->quoteName('order_number') . "='" .$order_number ."'"
+        );
+         
+        $query2->update($db->quoteName('#__virtuemart_orders'))->set($fields)->where($conditions);
+         
+        $db->setQuery($query2);
+        
+        if (!$db->query()) {
+            var_dump($db->getErrorMsg());
+            //throw new Exception($db->getErrorMsg());
+        }
+
+        $result = $db->execute();
+
             }
 
         }
 
         else{
 
-            echo "Operación Rechazada";
-
+           echo '<script>alert("' . $rta2["StatusMessage"] . '")</script>';
+       return null;
         }
 
 
@@ -810,7 +930,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $payment_name = $this->renderPluginName ($method);
 
         $html = '';
-        $link=	JRoute::_("index.php?option=com_virtuemart&view=orders&layout=details&order_number=".$order['details']['BT']->order_number."&order_pass=".$order['details']['BT']->order_pass, false) ;
+        $link=  JRoute::_("index.php?option=com_virtuemart&view=orders&layout=details&order_number=".$order['details']['BT']->order_number."&order_pass=".$order['details']['BT']->order_pass, false) ;
         $html .='<br />
         <a class="vm-button-correct" href="'.$link.'">'.vmText::_('COM_VIRTUEMART_ORDER_VIEW_ORDER').'</a>';
 
@@ -819,104 +939,188 @@ class plgVmpaymentTodopago extends vmPSPlugin {
     }
 
 
+    function tp_GAA($requestKey=null,$answerKey=null, $virtuemart_paymentmethod_id=2){
+
+        $connector_data = $this->getConnector($virtuemart_paymentmethod_id);   
+        $connector = $connector_data['connector'];
+        $security_code = $connector_data['security'];
+        $merchant = $connector_data['merchant'];
+
+        $optionsGAA = array (
+            'Security'   => $security_code,
+            'Merchant'   => $merchant,
+            'RequestKey' => $requestKey,
+            'AnswerKey'  => $answerKey // *Importante
+        );
+
+        $this->logInfo("Tp - GAA REQUEST : ".json_encode($optionsGAA), "message");
+
+        $rta = $connector->getAuthorizeAnswer($optionsGAA);
+
+        $this->logInfo("Tp - GAA: ".json_encode($rta), "message");
+
+        return $rta;
+    }
+
+
+
 
     function plgVmOnUserPaymentCancel () {
+        $this->logInfo(__FUNCTION__);
 
         if (!class_exists ('VirtueMartModelOrders')) {
+            $this->logInfo("la clase no existe");
+
             require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
         }
+
+        $answerKey = (isset($_GET['Answer']))?$_GET['Answer']:vRequest::getString ('Answer', 0);
+        $requestKey = $_COOKIE['RequestKey'];
+        $virtuemart_paymentmethod_id = (isset($_GET['pm']))?$_GET['pm']:2;
+
+        if ($answerKey) {
+            //si llego aca luego del first step quiere decir que el pago no fue exitoso, debo loguear el GAA
+            $rta_GAA = $this->tp_GAA($requestKey,$answerKey, $virtuemart_paymentmethod_id);
+        $_GET['Error'] = $rta_GAA['StatusMessage'];     
+        }
+
+        $this->logInfo(json_encode($_SESSION['__vm']));
 
         $tp_cart = json_decode($_SESSION['__vm']['vmcart']);
 
         $vm_order = VirtueMartModelOrders::getOrderIdByOrderNumber($tp_cart->order_number);
         $orderModel = VmModel::getModel('orders');
+
         $order = $orderModel->getOrder($vm_order);
 
+        if( isset($_GET['Error'])) {
+                 
+            $modelOrder = new VirtueMartModelOrders();
+            $order['order_status'] = 'X';
+            $order['virtuemart_order_id'] = $vm_order;
+            $order['customer_notified'] = 0;
+            $order['comments'] = JTExt::sprintf("Pago Cancelado: " .  $_GET['Error'] , $vm_order);
+
+            $modelOrder->updateStatusForOneOrder($vm_order, $order, false);
+        $method = $this->getVmPluginMethod($payment_method_id);
+            
+        if ($method->tp_emptycart_enabled){
+            $cart = VirtueMartCart::getCart();
+            $cart->emptyCart();
+            }
+            //echo '<script>alert("' . $_GET['Error'] . '");</script>';
+
+            $app = JFactory::getApplication();
+            $app->redirect(JRoute::_('index.php', false), vmText::_($_GET['Error']));
+
+
+            return NULL;
+
+        }
+
+
         if($this->_vmpCtable->virtuemart_paymentmethod_id!=$order['details']['BT']->virtuemart_paymentmethod_id){
+            $modelOrder = new VirtueMartModelOrders();
+            $order['order_status'] = 'X';
+            $order['virtuemart_order_id'] = $vm_order;
+            $order['customer_notified'] = 0;
+            $order['comments'] = JTExt::sprintf("Pago Cancelado: " . $rta_GAA["StatusMessage"] , $vm_order);
+
+            $modelOrder->updateStatusForOneOrder($vm_order, $order, false);
+            echo '<script>alert("' . $rta_GAA["StatusMessage"] . '")</script>';
+            if ($method->tp_emptycart_enabled){
+            $cart = VirtueMartCart::getCart();
+            $cart->emptyCart();
+            } 
+
             return NULL;
         }
 
-        echo '<script>alert("Pago Cancelado: Por favor intente nuevamente")</script>';
+        echo '<script>alert("' . $rta_GAA["StatusMessage"] . '")</script>';
 
 
         $modelOrder = new VirtueMartModelOrders();
         $order['order_status'] = 'X';
         $order['virtuemart_order_id'] = $vm_order;
-        $order['customer_notified'] = 1;
+        $order['customer_notified'] = 0;
         $order['comments'] = JTExt::sprintf("Pago Rechazado" , $vm_order);
 
         $modelOrder->updateStatusForOneOrder($vm_order, $order, false);
+            if ($method->tp_emptycart_enabled){
+            $cart = VirtueMartCart::getCart();
+            $cart->emptyCart();
+            } 
 
-        return true;    }
-
-
-        function plgVmOnPaymentNotification () {
-
-            if (!class_exists ('VirtueMartModelOrders')) {
-
-                require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
-
-            }
+        return true;
+    }
 
 
+    function plgVmOnPaymentNotification () {
 
-            $mb_data = vRequest::getPost();
+        if (!class_exists ('VirtueMartModelOrders')) {
 
+            require(VMPATH_ADMIN . DS . 'models' . DS . 'orders.php');
 
-            if (!isset($mb_data['transaction_id'])) {
-
-                return;
-
-
-            }
-
-            $order_number = $mb_data['transaction_id'];
-
-            if (!($virtuemart_order_id = VirtueMartModelOrders::getOrderIdByOrderNumber ($mb_data['transaction_id']))) {
-
-                return;
-            }
-
-
-            if (!($payment = $this->getDataByOrderId ($virtuemart_order_id))) {
-
-
-                return;
-            }
+        }
 
 
 
-            $method = $this->getVmPluginMethod ($payment->virtuemart_paymentmethod_id);
+        $mb_data = vRequest::getPost();
 
 
-            if (!$this->selectedThisElement ($method->payment_element)) {
+        if (!isset($mb_data['transaction_id'])) {
 
-                return FALSE;
-            }
-
+            return;
 
 
-            if (!$payment) {
+        }
+
+        $order_number = $mb_data['transaction_id'];
+
+        if (!($virtuemart_order_id = VirtueMartModelOrders::getOrderIdByOrderNumber ($mb_data['transaction_id']))) {
+
+            return;
+        }
 
 
-                return NULL;
-            }
+        if (!($payment = $this->getDataByOrderId ($virtuemart_order_id))) {
+
+
+            return;
+        }
 
 
 
-            $this->_storeInternalData ($method, $mb_data, $virtuemart_order_id);
+        $method = $this->getVmPluginMethod ($payment->virtuemart_paymentmethod_id);
 
 
-            $modelOrder = VmModel::getModel ('orders');
+        if (!$this->selectedThisElement ($method->payment_element)) {
 
-            $vmorder = $modelOrder->getOrder ($virtuemart_order_id);
+            return FALSE;
+        }
 
-            $order = array();
 
-            $error_msg = $this->_processStatus ($mb_data, $vmorder, $method);
 
-            if ($error_msg) {
+        if (!$payment) {
 
+
+            return NULL;
+        }
+
+
+
+        $this->_storeInternalData ($method, $mb_data, $virtuemart_order_id);
+
+
+        $modelOrder = VmModel::getModel ('orders');
+
+        $vmorder = $modelOrder->getOrder ($virtuemart_order_id);
+
+        $order = array();
+
+        $error_msg = $this->_processStatus ($mb_data, $vmorder, $method);
+
+        if ($error_msg) {
 
                 $order['customer_notified'] = 0;
                 $order['order_status'] = $method->status_canceled;
@@ -925,21 +1129,21 @@ class plgVmpaymentTodopago extends vmPSPlugin {
                 $this->logInfo ('process IPN ' . $error_msg, 'ERROR');
             } else {
 
-                $this->logInfo ('process IPN OK', 'message');
-            }
-
-
-            if (empty($mb_data['payment_status']) ||
-
-                ($mb_data['payment_status'] != 'Completed' &&
-
-                   $mb_data['payment_status'] != 'Pending')
-
-           ) { // can't get status or payment failed
-
-
-            //return false;
+            $this->logInfo ('process IPN OK', 'message');
         }
+
+
+        if (empty($mb_data['payment_status']) ||
+
+            ($mb_data['payment_status'] != 'Completed' &&
+
+               $mb_data['payment_status'] != 'Pending')
+
+       ) { // can't get status or payment failed
+
+
+        //return false;
+    }
 
 
 
@@ -1043,38 +1247,33 @@ function plgVmOnShowOrderBEPayment ($virtuemart_order_id, $payment_method_id) {
         }
 
         $data = array(
-            "RequestType"=>"ReturnRequest",
             "Security"=>$security,
             "RequestKey"=>$_requestKey,
             "Merchant"=>$merchant,
-            "Amount"=> $_POST["ReturnRequestAmount"]
+            "AMOUNT"=> $_POST["ReturnRequestAmount"]
             );
 
-        $data_string = json_encode($data);                                                                                   
+    require_once ('cs/TPConnector.php');
+    $method = $this->getVmPluginMethod($payment_method_id);
 
-        $ch = curl_init($rest_end_point);                                                                      
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);                                                                  
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
-            'Content-Type: application/json',                                                                                
-            "Authorization: $method->tp_auth_http")                                                                       
-        );                                                     
+    $tpconnector = new TPConnector();
+    $connector_data = $tpconnector->createTPConnector($method);
 
-        
+    $connector = $connector_data['connector'];
+    $security_code = $connector_data['security'];
+    $merchant = $connector_data['merchant'];
 
- 
+        $this->logInfo("TP - Devolucion PARAMETROS - ".json_encode($data), "message");
 
-        $result = curl_exec($ch);
+    $rta = $connector->returnRequest($data);
 
-        $rta = json_decode($result);
+        $this->logInfo("TP - Devolucion RESPUESTA - ".json_encode($rta), "message");
 
-        echo "<h4>".($rta->ReturnResponse->StatusMessage)."</h4>";
-        if($rta->ReturnResponse->StatusCode==2011){
-            echo '<h4 style="color:red">'."DEVOLUCION OK!".'</h4>';
+        if($rta["StatusCode"]==2011){
+            echo '<h4 style="color:red">'.$rta["StatusMessage"].'</h4>';
             echo '<script>alert("Su devolucion se ha realizado con exito")</script>';
         }else{
-            echo '<h4 style="color:red">'."NO SE PUDO REALIZAR DEVOLUCION INTENTE MAS TARDE!".'</h4>';
+            echo '<h4 style="color:red">'."Ha ocurrido un inconveniente:  ". $rta["StatusMessage"].'</h4>';
         }
 
     }}
@@ -1154,15 +1353,15 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 
     /**
-	 * This event is fired after the payment method has been selected. It can be used to store
-	 * additional payment info in the cart.
-	 *
-	 * @author Max Milbers
-	 * @author ValÃ©rie isaksen
-	 *
-	 * @param VirtueMartCart $cart: the actual cart
-	 * @return null if the payment was not selected, true if the data is valid, error message if the data is not valid
-	 */
+     * This event is fired after the payment method has been selected. It can be used to store
+     * additional payment info in the cart.
+     *
+     * @author Max Milbers
+     * @author ValÃ©rie isaksen
+     *
+     * @param VirtueMartCart $cart: the actual cart
+     * @return null if the payment was not selected, true if the data is valid, error message if the data is not valid
+     */
 
 
 
@@ -1174,11 +1373,11 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 
     /**
-	 * plgVmDisplayListFEPayment
-	 * This event is fired to display the pluginmethods in the cart (edit shipment/payment) for exampel
-	 *
-	 * @param object  $cart Cart object
-	 */
+     * plgVmDisplayListFEPayment
+     * This event is fired to display the pluginmethods in the cart (edit shipment/payment) for exampel
+     *
+     * @param object  $cart Cart object
+     */
 
 
     public function plgVmDisplayListFEPayment (VirtueMartCart $cart, $selected = 0, &$htmlIn) {
@@ -1220,27 +1419,14 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
             $this->_currentMethod->$method_name = $this->renderPluginName($this->_currentMethod);
             $html = $this->getPluginHtml($this->_currentMethod, $selected, $methodSalesPrice);
 
-            $states = Helper::getTPStates();//$this->getTPStates();
-            $states_html = '<select name="tp_states" id="tp_states">';
-            foreach($states as $city => $code){
-
-                $states_html.= '<option value="'.$code.'">'.$city.'</option>';
-
-            }
-
-            $states_html.= '</select>';
+            
 
 
             $html .= '<br /><br />
-            <table border="0" cellspacing="0" cellpadding="0" width="100%">
-             <tr valign="top" style="border:none">
-                 <td nowrapalign="left" >
+        
                      <img src="'.JURI::root().'plugins/vmpayment/todopago/logo.jpg" />
-                     <br /><br />
-                     <label for="cc_type">Elige la provincia</label>
-                     '.$states_html.'</td>
-                 </tr>
-             </table><br />';
+                     
+                    <br />';
 
 
              $htmla[] = $html;
@@ -1265,15 +1451,15 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
 
     /**
-	 * plgVmOnCheckAutomaticSelectedPayment
-	 * Checks how many plugins are available. If only one, the user will not have the choice. Enter edit_xxx page
-	 * The plugin must check first if it is the correct type
-	 * 
-	 * @author 
-	 * @param VirtueMartCart cart: the cart object
-	 * @return null if no plugin was found, 0 if more then one plugin was found,  virtuemart_xxx_id if only one plugin is found
-	 *
-	 */
+     * plgVmOnCheckAutomaticSelectedPayment
+     * Checks how many plugins are available. If only one, the user will not have the choice. Enter edit_xxx page
+     * The plugin must check first if it is the correct type
+     * 
+     * @author 
+     * @param VirtueMartCart cart: the cart object
+     * @return null if no plugin was found, 0 if more then one plugin was found,  virtuemart_xxx_id if only one plugin is found
+     *
+     */
 
     function plgVmOnCheckAutomaticSelectedPayment (VirtueMartCart $cart, array $cart_prices = array(), &$paymentCounter) {
 
@@ -1283,14 +1469,14 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
     }
 
     /**
-	 * This method is fired when showing the order details in the frontend.
-	 * It displays the method-specific data.
-	 *
-	 * @param integer $order_id The order ID
-	 * @return mixed Null for methods that aren't active, text (HTML) otherwise
-	 * @author Max Milbers
-	 * @author Valerie Isaksen
-	 */
+     * This method is fired when showing the order details in the frontend.
+     * It displays the method-specific data.
+     *
+     * @param integer $order_id The order ID
+     * @return mixed Null for methods that aren't active, text (HTML) otherwise
+     * @author Max Milbers
+     * @author Valerie Isaksen
+     */
 
     public function plgVmOnShowOrderFEPayment ($virtuemart_order_id, $virtuemart_paymentmethod_id, &$payment_name) {
     }
@@ -1314,6 +1500,114 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
         return $this->setOnTablePluginParams ($name, $id, $table);
 
     }
+
+
+    function display_btn_credentials(){ 
+echo        '<div style="margin-left: 202px; ">
+            <div><img src="http://www.todopago.com.ar/sites/todopago.com.ar/files/logo.png"></div>
+            <button id="btn-credentials-dev" name="btn-credentials" class="btn-config-credentials" >
+                Obtener credenciales Developers
+            </button>
+            <button id="btn-credentials-prod" name="btn-credentials" class="btn-config-credentials" >
+                Obtener credenciales Produccion
+            </button>
+            <div id="credentials-login" class="order-action-popup" style="display:none;">
+                <img src="http://www.todopago.com.ar/sites/todopago.com.ar/files/logo.png">
+                <p>Ingresa con tus credenciales para Obtener los datos de configuración</p>    
+                    <input id="mode" name="mode" type="hidden" value="">
+                    <label class="control-label">E-mail</label>
+                    <input id="mail" class="form-control" name="mail" type="email" value="" placeholder="E-mail"/>
+                    <label class="control-label">Contrase&ntilde;a</label>
+                    <input id="pass" class="form-control" name="pass" type="password" value="" placeholder="Contrase&ntilde;a"/>
+                    <button id="btn-form-credentials" style="margin:15%;" class="btn-config-credentials" >Acceder</button>
+            </div>
+
+        </div>
+
+        <script type="text/javascript">
+        
+        jQuery( document ).ready(function() {
+                var x = document.getElementsByName("payment_name");
+                var y = document.getElementsByName("slug");
+
+                x[0].value = "Todo Pago"
+                y[0].value = "todopago"
+
+        jQuery(x).prop("readonly", true);
+        jQuery(y).prop("readonly", true);
+            });
+
+jQuery( document ).ready(function() {
+
+Joomla.submitbutton=function(a){
+              if (jQuery("#params_tp_form_timeout").val()) {
+            if(jQuery("#params_tp_form_timeout").val() > 6*60*60*1000)
+                jQuery("#params_tp_form_timeout").val(6*60*60*1000)
+            if(jQuery("#params_tp_form_timeout").val() < 5*60*1000)
+                jQuery("#params_tp_form_timeout").val(5*60*1000)
+            }
+
+        var options = { path: "/", expires: 2}
+        if (a == "apply") {
+            var idx = jQuery("#tabs li.current").index();
+            jQuery.cookie("vmapply", idx, options);
+        } else {
+            jQuery.cookie("vmapply", "0", options);
+        }
+        jQuery( "#media-dialog" ).remove();
+        form = document.getElementById("adminForm");
+        form.task.value = a;
+        form.submit();
+        return false;
+    };
+
+});
+            jQuery("#btn-credentials-dev").click(function(){
+                jQuery( "#credentials-login" ).dialog();
+                jQuery("#mode").val("test");
+            });
+
+            jQuery("#btn-credentials-prod").click(function(){              
+                jQuery( "#credentials-login" ).dialog();
+                jQuery("#mode").val("prod");
+            });
+
+
+            jQuery("#btn-form-credentials").click(function(){ 
+                console.log("obtengo credenciales por ajax.");
+                jQuery.post( "../plugins/vmpayment/todopago/credentials_form.php", 
+                        { mail: jQuery("#mail").val(), 
+                          pass: jQuery("#pass").val(),
+                          mode: jQuery("#mode").val()
+                        }, function(data){ 
+                            console.log(data);
+                            var obj = jQuery.parseJSON( data );
+                            if (obj.error_message != "0"){
+                                console.log(obj.error_message);
+                                alert(obj.error_message);
+                            }else{ 
+                                if (obj.ambiente == "test"){
+                                    jQuery("input:text[id=params_tp_auth_http_test]").val(obj.Authorization);
+                                    jQuery("input:text[id=params_tp_id_site_test]").val(obj.merchantId);
+                                    jQuery("input:text[id=params_tp_security_code_test]").val(obj.apiKey);
+                                }else{
+                                    jQuery("input:text[id=params_tp_auth_http_prod]").val(obj.Authorization);
+                                    jQuery("input:text[id=params_tp_id_site_prod]").val(obj.merchantId);
+                                    jQuery("input:text[id=params_tp_security_code_prod]").val(obj.apiKey);
+                                }
+                            }    
+                        }
+                );
+                jQuery("#credentials-login").dialog("close");
+            });
+                   
+        </script>';
+
+    }
+
+
+
+
 
     private function _sanitize_string($string){
 
@@ -1340,4 +1634,21 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
 
         return $string;
     }
+
+
+    public function get_the_user_ip() {
+        if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
+            //check ip from share internet
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+            //to check ip is pass from proxy
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } else {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        return $ip;
+    }
+
+
+
 }

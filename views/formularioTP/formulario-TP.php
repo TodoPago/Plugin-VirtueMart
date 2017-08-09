@@ -1,4 +1,3 @@
-
 <?php $_css =  JURI::base()."plugins/vmpayment/todopago/views/formularioTP/styles.css"; ?>
 
 <?php $_corner = JURI::base()."plugins/vmpayment/todopago/views/formularioTP/js/jquery.corner.js"; ?><!--script src="TPHybridForm-v0.1.js"></script-->
@@ -15,10 +14,11 @@
 
 			$(document).ready(function() {
 				$("#breadcrumbs").hide();
+  				$(".vm-order-done").hide();
+      			        $(':input').corner("round 3px");
+				$("#main").children().last().remove();
+			        $(":contains('Your order has been processed.')").last()[0].lastChild.remove();
 
-				$(".vm-order-done").hide();
-			    $(':input').corner("round 3px");
-			    
 			    $("#formaDePagoCbx").change(function () {
 				    if(this.value == 500 || this.value == 501){
 				    	$(".spacer").hide();
@@ -46,6 +46,11 @@
 					<label id="labelPromotionTextId" class="left tp-label"></label>
 					<div class="clear"></div>
 				</div>
+				<!-- Para los casos en el que el comercio opera con PEI -->
+					<div class="form-row tp-no-cupon">
+						<label id="labelPeiCheckboxId"></label>
+						<input id="peiCbx"/>
+					</div>
 				<div>
 					<input class="inputbox" id="numeroTarjetaTxt"/>
 				</div>
@@ -72,9 +77,13 @@
 				<div>
 					<input class="inputbox" id="emailTxt"/><br/>
 				</div>
+				<div><!-- Para los casos en el que el comercio opera con PEI -->
+			    	<label id="labelPeiTokenTextId"></label>
+					<input id="peiTokenTxt"/>
+				</div>
 				<div id="tp-bt-wrapper">
+					<button id="MY_btnPagarConBilletera" class="tp-button"/>
 					<button id="MY_btnConfirmarPago" class="tp-button"/>
-					<!--button id="MY_btnPagarConBilletera" class="tp-button"/-->
 				</div>
 			</div>	
 		</div>
@@ -115,12 +124,25 @@
 		function validationCollector(parametros) {
 			console.log("My validator collector");
 			console.log(parametros.field + " ==> " + parametros.error);
+			alert(parametros.error);
 			console.log(parametros);
 		}
 		function billeteraPaymentResponse(response) {
 			console.log("My wallet callback");
 			console.log(response.ResultCode + " : " + response.ResultMessage);
 			console.log(response);
+			if(response.AuthorizationKey){
+			if(response.ResultCode == -1) {
+				url_ok = "<?php echo $data_comercial['URL_OK'] ?>&Answer="+response.AuthorizationKey;
+				window.location.href = url_ok;
+			} else {
+				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Answer="+response.AuthorizationKey;
+				window.location.href = url_error;
+			}
+			} else{
+				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Error="+response.ResultMessage;
+				window.location.href = url_error;
+			}
 		}
 		function customPaymentSuccessResponse(response) {
 			console.log("My custom payment success callback");
@@ -135,8 +157,13 @@
 			console.log("Mi custom payment error callback");
 			console.log(response.ResultCode + " : " + response.ResultMessage);
 			console.log(response);
-			url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Answer="+response.AuthorizationKey;
-			window.location.href = url_error;
+			if(response.AuthorizationKey){
+				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Answer=" + response.AuthorizationKey;
+				window.location.href = url_error;
+			} else{
+				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Error="+response.ResultMessage;
+				window.location.href = url_error;
+			}
 		}
 		function initLoading() {
 			console.log('Cargando');
@@ -146,3 +173,6 @@
 		}
 
 	</script>
+<style>
+.vm-order-done { display: none; }
+</style>

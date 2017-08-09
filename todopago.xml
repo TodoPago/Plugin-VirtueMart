@@ -5,7 +5,7 @@
         <author>TodoPago</author>
         <authorUrl>http://www.todopago.com.ar</authorUrl>
         <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
-        <version>1.5.0</version>
+        <version>1.8.0</version>
         <description>
             <![CDATA[<a href="http://www.todopago.com.ar" target="_blank">TodoPago</a>. ]]>
         </description>
@@ -13,10 +13,16 @@
             <filename plugin="todopago">todopago.php</filename>
             <filename plugin="todopago">Authorize.wsdl</filename>
             <filename plugin="todopago">Operations.wsdl</filename>
-            <folder plugin="todopago">sdk</folder>
+            <folder plugin="todopago">vendor</folder>
             <folder plugin="todopago">cs</folder>
             <folder plugin="todopago">views</folder>
             <filename plugin="todopago">logo.jpg</filename>
+            <filename plugin="todopago">credentials_form.php</filename>
+            <filename plugin="todopago">composer.json</filename>
+            <filename plugin="todopago">composer.lock</filename>
+            <filename plugin="todopago">README.md</filename>
+            <filename plugin="todopago">en-GB.plg_vmpayment_todopago.ini</filename>
+            <filename plugin="todopago">vmmediosdepago.php</filename>
         </files>
         <languages>
             <language tag="en-GB">en-GB.plg_vmpayment_todopago.ini</language>
@@ -26,37 +32,71 @@
             <fields name="params">                
                 <fieldset name="basic" addfieldpath="/administrator/components/com_virtuemart/fields">
                     
+                    <!-- AMBIENTE DEVELOPERS -->
+                    <field type="vmtitle" default="VMPAYMENT_TODOPAGO_CONFIG_TEST" description="" />
+                    <field name="tp_id_site_test" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_ID_SITE" description="VMPAYMENT_TODOPAGO_ID_SITE_TIP" />
+                    <field name="tp_security_code_test" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_SECURITY_CODE" description="VMPAYMENT_TODOPAGO_SECURITY_CODE_TIP" />
+                    <field name="tp_auth_http_test" type="text" label="VMPAYMENT_TODOPAGO_MIN_AMOUNT" description="VMPAYMENT_TODOPAGO_MIN_AMOUNT_TIP" />
+                    <!-- /AMBIENTE DEVELOPERS -->
+
+                    <!-- AMBIENTE PRODUCCION -->
+                    <field type="vmtitle" default="VMPAYMENT_TODOPAGO_DEBUG_SECTION" description="" />
+                    <field name="tp_id_site_prod" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_IDSITE_PROD" description="VMPAYMENT_TODOPAGO_IDSITE_PROD_TIP" />
+                    <field name="tp_security_code_prod" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_SECURITY_CODE_PROD" description="VMPAYMENT_TODOPAGO_SECURITY_CODE_PROD_TIP" />
+                    <field name="tp_auth_http_prod" type="text" label="VMPAYMENT_TODOPAGO_MIN_AMOUNT" description="VMPAYMENT_TODOPAGO_MIN_AMOUNT_TIP" />
+                    <!-- /AMBIENTE PRODUCCION -->
+
                     <field type="vmtitle" default="VMPAYMENT_TODOPAGO_ACCOUNT_PARAMS" />
-                    
+                    <field name="tp_ambiente" type="list" default="" label="VMPAYMENT_TODOPAGO_AMBIENTE" description="VMPAYMENT_TODOPAGO_AMBIENTE_TIP">
+                        <option value="test">developers</option>
+                        <option value="prod">Produccion</option>
+                    </field>
+                  
+                    <field name="tp_dead_line" type="text" label="VMPAYMENT_TODOPAGO_DEAD_LINE" description="VMPAYMENT_TODOPAGO_DEAD_LINE_TIP" />
+
                     <field type="list" name="tp_vertical_type" label="VMPAYMENT_TODOPAGO_PRODUCT" default="" description="VMPAYMENT_TODOPAGO_PRODUCT_TIP">
                         <option value="retail">VMPAYMENT_TODOPAGO_PRODUCT_ACC</option>
                         <option value="ticketing">VMPAYMENT_TODOPAGO_PRODUCT_DID</option>
                         <option value="services">VMPAYMENT_TODOPAGO_PRODUCT_GIR</option>
                         <option value="digital">VMPAYMENT_TODOPAGO_PRODUCT_IDL</option>
-                    </field>
-                    
+                    </field>                    
 
                     <field name="tp_formulario" type="list" default="" label="VMPAYMENT_TODOPAGO_FORMULARIO" description="VMPAYMENT_TODOPAGO_FORMULARIO_TIP">
                         <option value="0">Redireccion</option>
                         <option value="1">Formulario Integrado</option>
                     </field>
 
-                    <field name="tp_ambiente" type="list" default="" label="VMPAYMENT_TODOPAGO_AMBIENTE" description="VMPAYMENT_TODOPAGO_AMBIENTE_TIP">
-                        <option value="test">developers</option>
-                        <option value="prod">Produccion</option>
+                    <field name="tp_cuotas_enabled" type="list" default="" label="Habilitar cantidad máxima de cuotas del formulario" description="son la cantidad de cuotas que tendrá disponible el comprador">
+                    <option value="0">No Habilitar </option>
+                    <option value="1">Si Habilitar</option>
+                    </field>  
+                    <field name="tp_cuotas" type="list" default="" label="VMPAYMENT_TODOPAGO_CUOTAS" description="VMPAYMENT_TODOPAGO_CUOTAS_TIP">
+                        <option value="12">12 CUOTAS MAXIMAS</option>
+                        <option value="11">11 CUOTAS MAXIMAS</option>
+                        <option value="10">10 CUOTAS MAXIMAS</option>
+                        <option value="9">9 CUOTAS MAXIMAS</option>
+                        <option value="8">8 CUOTAS MAXIMAS</option>
+                        <option value="7">7 CUOTAS MAXIMAS</option>
+                        <option value="6">6 CUOTAS MAXIMAS</option>
+                        <option value="5">5 CUOTAS MAXIMAS</option>
+                        <option value="4">4 CUOTAS MAXIMAS</option>
+                        <option value="3">3 CUOTAS MAXIMAS</option>
+                        <option value="2">2 CUOTAS MAXIMAS</option>
+                        <option value="1">1 CUOTA MAXIMA</option>
                     </field>
-                    <field name="tp_auth_http" type="text" label="VMPAYMENT_TODOPAGO_MIN_AMOUNT" description="VMPAYMENT_TODOPAGO_MIN_AMOUNT_TIP" />
-                    <field name="tp_dead_line" type="text" label="VMPAYMENT_TODOPAGO_DEAD_LINE" description="VMPAYMENT_TODOPAGO_DEAD_LINE_TIP" />
-                    <field type="vmtitle" default="VMPAYMENT_TODOPAGO_CONFIG_TEST" description="" />
-                    
-                    <field name="tp_id_site_test" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_ID_SITE" description="VMPAYMENT_TODOPAGO_ID_SITE_TIP" />
-                    <field name="tp_security_code_test" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_SECURITY_CODE" description="VMPAYMENT_TODOPAGO_SECURITY_CODE_TIP" />
-                    <field type="vmtitle" default="VMPAYMENT_TODOPAGO_DEBUG_SECTION" description="" />
-                    
-                    <field name="tp_id_site_prod" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_IDSITE_PROD" description="VMPAYMENT_TODOPAGO_IDSITE_PROD_TIP" />
-                    <field name="tp_security_code_prod" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_SECURITY_CODE_PROD" description="VMPAYMENT_TODOPAGO_SECURITY_CODE_PROD_TIP" />
-                    <!-- /AMBIENTE PRODUCCION -->
-                    
+
+                    <field name="tp_form_timeout_enabled" type="list" default="" label="Habilitar tiempo de vida del formulario" description="Habilitar tiempo de vida del formulario">
+                    <option value="0">No Habilitar </option>
+                    <option value="1">Si Habilitar</option>
+                    </field>     
+
+                    <field name="tp_form_timeout" type="number" label="Tiempo de vida del formulario" description="Por defecto 1800000ms (30 minutos)" default="1800000" />
+
+                    <field name="tp_emptycart_enabled" type="list" default="" label="Limpiar el carrito si el pago es rechazado" description="En caso que el pago sea rechazado si esta habilitada esta opcion se limpiará, en caso contrario, se mantendrá.">
+                    <option value="0">No Habilitar </option>
+                    <option value="1">Si Habilitar</option>
+                    </field>
+
                     <!-- ORDER STATUS -->
                     <field type="vmtitle" default="VMPAYMENT_TODOPAGO_ESTADOS_PEDIDOS" description="" />
                     <field name="tp_order_status_init" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_TODOPAGO_ESTADOS_PEDIDOS_INICIADA" />
