@@ -56,3 +56,13 @@
 .tp-label{
 	margin:12px 0 0 10px;
 }
+
+.select-form{
+	width: 141px;
+}
+
+.error{
+	margin-left: 10px !important;
+	color:red !important;
+	font-size:0.9em !important;
+}

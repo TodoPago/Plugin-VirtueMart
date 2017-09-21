@@ -46,6 +46,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $this->tableFields = array_keys (Helper::getTableSQLFields ());
         $this->_tablepkey = 'id'; //virtuemart_TODOPAGO_id';
         $this->_tableId = 'id'; //'virtuemart_TODOPAGO_id';
+        $this->db = JFactory::getDbo();
 
         $varsToPush = array(
             'tp_vertical_type'    => array('', 'char'),
@@ -74,8 +75,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             'tp_form_timeout_enabled'=>array('', 'int'),
             'tp_form_timeout'       => array('', 'int'),
             'tp_emptycart_enabled'       => array('', 'int'),
-            
-
+            'tp_gmaps_enabled'   => array('', 'int'),
         );
 
         $this->setConfigParameterable ($this->_configTableFieldName, $varsToPush);
@@ -87,7 +87,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         }
 
         $this->tpFinancialCost($view);
-
+        $this->getVmPluginCreateTableAddressSQL();
     }
 
     function tpFinancialCost($view){
@@ -208,9 +208,23 @@ class plgVmpaymentTodopago extends vmPSPlugin {
     }
 
     public function getVmPluginCreateTableSQL () {
+        $this->getVmPluginCreateTableAddressSQL();
         return $this->createTableSQL ('Payment Todopago Table');
     }
 
+    private function getVmPluginCreateTableAddressSQL () {
+        $db = JFactory::getDBO();
+        $query = "CREATE TABLE IF NOT EXISTS `#__todopagoaddress` (
+          `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+          `address` VARCHAR(255) NULL DEFAULT NULL,
+          `city` VARCHAR(255) NULL DEFAULT NULL,
+          `postal_code` VARCHAR(255) NULL DEFAULT NULL,
+          `country` VARCHAR(255) NULL DEFAULT NULL,
+          PRIMARY KEY (`id`)
+        );";
+        $db->setQuery($query);
+        $db->query();
+    }    
 
 
     function _getTODOPAGOURL ($method) {
@@ -533,9 +547,10 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         
         $extra_fields = array();
 
+
         require('cs/FactoryTodopago.php');
         $extra_fields = FactoryTodopago::get_extractor($method->tp_vertical_type, $cart, $customFieldsModel);
-
+        
         $optionsSAR_operacion = array_merge($optionsSAR_operacion, $extra_fields);
 
         $optionsSAR_operacion['MERCHANT'] = $merchant;
@@ -559,7 +574,23 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $this->logInfo("TP - SARoperacion - ".json_encode($optionsSAR_operacion), "message");
 
+/*        // si esta habilitado para la direcciones de gmaps setear cliente google
+        $address_result = $this->address_loaded($optionsSAR_operacion);
+        $gClient = null;
 
+        if($address_result['address_loaded']){ 
+            $optionsSAR_operacion = $address_result['payDataOperacion'];
+            $order = $this->update_addresses($order, $address_result['payDataOperacion']);
+
+        }elseif ($method->tp_gmaps_enabled == 1){
+            $gClient = new \TodoPago\Client\Google();
+
+            if($gClient != null) {
+                $connector->setGoogleClient($gClient);
+            }
+           
+        }
+*/        
         $this->logInfo("llamada al SAR", "message");
         
         try{
@@ -568,7 +599,13 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             $this->logInfo(json_encode($e), "message");
         }
 
-
+        //guardo direccion 
+  /*      if($gClient != null) {
+            $this->tp_save_address($connector->getGoogleClient()->getFinalAddress());
+            // modify addresses
+            $order = $this->update_addresses($order, $connector->getGoogleClient()->getFinalAddress());
+        }
+*/
         $this->logInfo("TP - SAR rta - ".json_encode($rta), "message");
         
   
@@ -623,6 +660,115 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             
         }
     }
+
+    private function address_loaded($payDataOperacion){
+       
+        $CSBT_address = $this->get_loaded_address($payDataOperacion, 'CSBT');
+        $CSST_address = $this->get_loaded_address($payDataOperacion, 'CSST');
+       
+        if (($CSBT_address != null) && ( $CSST_address != null ) ){
+            $payDataOperacion['CSBTSTREET1']= $CSBT_address->address;
+            $payDataOperacion['CSBTPOSTALCODE']= $CSBT_address->postal_code;
+            $payDataOperacion['CSBTCITY']= $CSBT_address->city;
+            $payDataOperacion['CSBTCOUNTRY']= $CSBT_address->country;
+
+            $payDataOperacion['CSSTSTREET1']= $CSST_address->address;
+            $payDataOperacion['CSSTPOSTALCODE']= $CSST_address->postal_code;
+            $payDataOperacion['CSSTCITY']= $CSST_address->city;
+            $payDataOperacion['CSSTCOUNTRY']= $CSST_address->country;
+
+            $address_loaded = true;
+        }else{ 
+            $address_loaded = false;
+        }
+
+        $address_result = array('payDataOperacion' => $payDataOperacion,                            
+                                'address_loaded' => $address_loaded
+                                );
+
+        return $address_result; 
+    }
+
+    /**
+    *   returns stdClass if exist address, else returns null
+    */
+    private function get_loaded_address($payDataOperacion, $type){
+
+        $street  = explode(' ', $payDataOperacion["{$type}STREET1"]);
+
+        $where = '';  
+        foreach ($street as $val) { 
+            $where .= " address like '%{$val}%' and ";
+        }
+
+        $query = "SELECT * FROM `#__todopagoaddress` where {$where} postal_code like '%{$payDataOperacion["{$type}POSTALCODE"]}%' and country='{$payDataOperacion["{$type}COUNTRY"]}' limit 1" ;
+
+        $this->db->setQuery($query);
+        $res = $this->db->loadObjectList();
+
+        return $res[0];
+    }
+
+
+
+    private function tp_save_address($payDataOperacion){
+
+        // Get a db connection.
+        $query = "INSERT INTO `#__todopagoaddress` (`address`, `city`, `postal_code`, `country`) 
+                  VALUES ('{$payDataOperacion['billing']['CSBTSTREET1']}', '{$payDataOperacion['billing']['CSBTCITY']}', '{$payDataOperacion['billing']['CSBTPOSTALCODE']}', '{$payDataOperacion['billing']['CSBTCOUNTRY']}');"; 
+
+        $this->db->setQuery($query);
+        $this->db->execute(); 
+
+        if ($this->address_diff($payDataOperacion)){
+
+            $query = "INSERT INTO `#__todopagoaddress` (`address`, `city`, `postal_code`, `country`) 
+                  VALUES ('{$payDataOperacion['shipping']['CSSTSTREET1']}', '{$payDataOperacion['shipping']['CSSTCITY']}', '{$payDataOperacion['shipping']['CSSTPOSTALCODE']}', '{$payDataOperacion['shipping']['CSSTCOUNTRY']}');"; 
+            $this->db->setQuery($query);
+            $this->db->execute();
+
+        } 
+        
+    }
+
+    private function address_diff($payDataOperacion){
+        $result = false; 
+
+        if($payDataOperacion['billing']['CSBTCOUNTRY'] != $payDataOperacion['shipping']['CSSTCOUNTRY']) $result = true; 
+        if($payDataOperacion['billing']['CSBTPOSTALCODE'] != $payDataOperacion['shipping']['CSSTPOSTALCODE']) $result = true; 
+        if($payDataOperacion['billing']['CSBTCITY'] != $payDataOperacion['shipping']['CSSTCITY']) $result = true; 
+        if($payDataOperacion['billing']['CSBTSTREET1'] != $payDataOperacion['shipping']['CSSTSTREET1']) $result = true; 
+
+        return $result;
+    }
+
+    private function update_addresses($order,  $payDataOperacion){
+    
+        $query = "  UPDATE `#__virtuemart_order_userinfos` 
+                    SET `address_1` = '{$payDataOperacion['billing']['CSBTSTREET1']}' , 
+                      `city`='{$payDataOperacion['billing']['CSBTCITY']}' , 
+                      `zip`='{$payDataOperacion['billing']['CSBTPOSTALCODE']}' 
+                    WHERE `virtuemart_order_userinfo_id` = {$order['details']['BT']->virtuemart_order_userinfo_id}; " ;
+
+        $this->db->setQuery($query);
+        $this->db->execute();
+       
+
+        $query = " UPDATE `#__virtuemart_order_userinfos` 
+                    SET `address_1` = '{$payDataOperacion['shipping']['CSSTSTREET1']}' , 
+                      `city`='{$payDataOperacion['shipping']['CSSTCITY']}' , 
+                      `zip`='{$payDataOperacion['shipping']['CSSTPOSTALCODE']}' 
+                    WHERE `virtuemart_order_userinfo_id` = {$order['details']['ST']->virtuemart_order_userinfo_id};" ;
+ 
+        $this->db->setQuery($query);
+        $this->db->execute();
+  
+        return false;  
+
+    }
+
+
+
 
     function _get_formulario($rta, $data_operation, $data_comercial, $ambiente)
     {

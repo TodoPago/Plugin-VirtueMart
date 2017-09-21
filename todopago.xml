@@ -5,7 +5,7 @@
         <author>TodoPago</author>
         <authorUrl>http://www.todopago.com.ar</authorUrl>
         <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
-        <version>1.8.0</version>
+        <version>1.9.0</version>
         <description>
             <![CDATA[<a href="http://www.todopago.com.ar" target="_blank">TodoPago</a>. ]]>
         </description>
@@ -93,6 +93,11 @@
                     <field name="tp_form_timeout" type="number" label="Tiempo de vida del formulario" description="Por defecto 1800000ms (30 minutos)" default="1800000" />
 
                     <field name="tp_emptycart_enabled" type="list" default="" label="Limpiar el carrito si el pago es rechazado" description="En caso que el pago sea rechazado si esta habilitada esta opcion se limpiará, en caso contrario, se mantendrá.">
+                    <option value="0">No Habilitar </option>
+                    <option value="1">Si Habilitar</option>
+                    </field>
+
+                    <field name="tp_gmaps_enabled" type="list" default="" label="Formatear direcciones con google maps" description="">
                     <option value="0">No Habilitar </option>
                     <option value="1">Si Habilitar</option>
                     </field>
