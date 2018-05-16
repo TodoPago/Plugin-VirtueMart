@@ -1,9 +1,9 @@
 <script type="text/javascript">
-    
+
    //evita el f5
-    document.onkeydown = function(event){  
+    document.onkeydown = function(event){
         if(event.keyCode==116){
-            return false;            
+            return false;
           }
     }
 
@@ -22,55 +22,38 @@
     <h3>Estado de la operacion - TodoPago </h3>
     </td><td></td>
     </tr>
-<?php 
-    $rta = ''; 
+<?php
+    $rta = '';
     $refunds = $status['Operations']['REFUNDS'];
 
     $auxArray = array(
            "REFUND" => $refunds
            );
     $auxColection  = '';
-    if($refunds != null){  
-        $aux = 'REFUND'; 
+    function printGetStatus($arrayResult, $indent = 0) {
+    	$rta = '';
+    	foreach ($arrayResult as $key => $value) {
+    	    if ($key !== 'nil' && $key !== "@attributes") {
+    			if (is_array($value) ){
+    			    $rta .= "<tr>";
+    			    $rta .= "<td>".str_repeat("-", $indent) . "<strong>$key:</strong></td>";
+    			    $rta .= "<td>".printGetStatus($value, $indent + 2)."</td>";
+    			    $rta .= "</tr>";
+    			} else {
+    			    $rta .= "<tr><td>".str_repeat("-", $indent) . "<strong>$key:</strong></td><td> $value </td></tr>";
+    			}
+    	    }
+    	}
+    	return $rta;
+    }
+    if($refunds != null){
+        $aux = 'REFUND';
         $auxColection = 'REFUNDS';
     }
 
 
     if (isset($status['Operations']) && is_array($status['Operations']) ) {
-        foreach ($status['Operations'] as $key => $value) {   
-          if(is_array($value) && $key == $auxColection){
-              $rta .= "<tr><td>$key: </td>\n";
-              foreach ($auxArray[$aux] as $key2 => $value2) {  
-                  $rta .= '<td>';           
-                  $rta .= $aux." \n";                
-                  if(is_array($value2)){                    
-                      foreach ($value2 as $key3 => $value3) {
-                          if(is_array($value3)){ 
-                              foreach ($value3 as $key4 => $value4) {
-                                  $rta .= "   - $key4: $value4 \n";
-                              }
-                          }else{
-                              $rta .= "   - $key3: $value3 \n"; 
-                          }                   
-                      }
-                  }else{
-                    $rta .= "   - $key2: $value2 \n";
-                  }
-                  $rta .= '<td>';
-              }
-              $rta .= "</tr>";                                
-          }else{
-              if(is_array($value)){
-                  $rta .= "<tr><td>$key:</td><td>";
-                  foreach ($value as $key5 => $value5) {
-                      $rta .= "   - $key5: $value5 \n";
-                  }
-                  $rta .= "</td></tr>";
-              }else{
-                  $rta .= "<tr><td>$key:</td><td>$value</td></tr>";
-              }
-          }
-        }
+        $rta .= printGetStatus($status['Operations']);
     }else{
         $rta .= '<tr><td>No hay operaciones para esta orden.<td></tr>';
     }

@@ -17,6 +17,8 @@
 use TodoPago\Sdk as Sdk;
 
 defined ('_JEXEC') or die('Restricted access');
+define('TP_PLUGIN_VERSION', '1.8.0');
+
 
 if (!class_exists ('vmPSPlugin')) {
     require(JPATH_VM_PLUGINS . DS . 'vmpsplugin.php');
@@ -47,6 +49,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $this->_tablepkey = 'id'; //virtuemart_TODOPAGO_id';
         $this->_tableId = 'id'; //'virtuemart_TODOPAGO_id';
         $this->db = JFactory::getDbo();
+        $this->TodoPagoPluginVersion = TP_PLUGIN_VERSION;
 
         $varsToPush = array(
             'tp_vertical_type'    => array('', 'char'),
@@ -83,7 +86,8 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $app = JFactory::getApplication();    
         $view = (isset($_GET['view']))?$_GET['view']:'';
         if($app->isAdmin() && $this->isTodopagoPaymentPage($view) ){
-            $this->display_btn_credentials();    
+            $this->display_btn_credentials(); 
+            $this->evaluate_update();   
         }
 
         $this->tpFinancialCost($view);
@@ -146,6 +150,59 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         $model = VmModel::getModel('paymentmethod');
         $payment = $model->getPayment();
         return (strtolower($payment->slug)=='todopago' && $view=='paymentmethod' )?true:false;
+    }
+
+
+    function getGithubVersion(){
+        $headers = ["Authorization: token 21600a0757d4b32418c54e3833dd9d47f78186b4"];
+
+        $ch = curl_init(); 
+        curl_setopt($ch, CURLOPT_URL, 'https://api.github.com/repos/TodoPago/Plugin-VirtueMart/releases/latest'); 
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $output = curl_exec($ch); 
+        curl_close($ch);
+
+        $result = (array) json_decode($output);
+
+        return str_ireplace("v", "", $result['tag_name']);
+    }
+
+    function needUpdatePlugin($tpGithubVersion, $installedVersion){
+        $return = 0;
+        $a = explode('.', $tpGithubVersion);
+        $b = explode('.', $installedVersion);
+             
+        foreach ( $a as $i => $val ) {
+            if (($val && !$b[$i] && intval($val) > 0) || ( intval($val) > intval($b[$i])) ) {
+                $return = 1;
+                break;
+            } else if (($b[$i] && !$val && intval($b[$i]) > 0) || (intval($val) < intval($b[$i]))) {
+                $return = -1;
+               break;
+           }
+        }
+        return $return;
+    }
+
+    function evaluate_update(){        
+
+        $tpGithubVersion = $this->getGithubVersion(); 
+        $installedVersion = TP_PLUGIN_VERSION;
+
+        $update_message = '';
+        $need_update_plugin = $this->needUpdatePlugin($tpGithubVersion, $installedVersion);
+
+        if ($need_update_plugin && $need_update_plugin==1){
+            $update_message = '<div class="alert alert-error alert-joomlaupdate">
+             Se encuentra disponible una versión más reciente del plugin de Todo Pago, puede consultarla desde <a href="https://github.com/TodoPago/Plugin-VirtueMart" target="_blank">aquí</a></div>';
+        }
+
+        echo $update_message;
+        return 0;
     }
 
 
@@ -496,7 +553,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         '&lang='.vRequest::getCmd('lang','');
 
-    $Error_message = ( isset($_GET['Error']))? $_GET['Error']: 'El pago no pudo ser realizado';
+        $Error_message = ( isset($_GET['Error']))? $_GET['Error']: 'El pago no pudo ser realizado';
 
         $cancel_url = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginUserPaymentCancel&on=' .
 
@@ -512,24 +569,19 @@ class plgVmpaymentTodopago extends vmPSPlugin {
 
         $status_url  = JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component&lang='.vRequest::getCmd('lang','');
 
+        $return_url =  JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&on=' .
+            $order['details']['BT']->order_number .
+            '&pm=' .
+            $order['details']['BT']->virtuemart_paymentmethod_id;
+        $typeForm = ($method->tp_formulario)?'H':'E';
 
         $optionsSAR_comercio = array (
             'Security' => $security_code,
             'EncodingMethod' => 'XML',
             'Merchant' => $merchant,
-            'PUSHNOTIFYENDPOINT'=>
-            $return_url =  JURI::root().'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&on=' .
-
-
-            $order['details']['BT']->order_number .
-
-            '&pm=' .
-
-            $order['details']['BT']->virtuemart_paymentmethod_id,
-
+            'PUSHNOTIFYENDPOINT'=> $return_url,
             'URL_OK' => $return_url,
-            'URL_ERROR' => $cancel_url
-
+            'URL_ERROR' => $cancel_url,
             );
 
         $customFieldsModel = VmModel::getModel ('Customfields');
@@ -569,6 +621,10 @@ class plgVmpaymentTodopago extends vmPSPlugin {
         if(isset($method->tp_form_timeout_enabled) && $method->tp_form_timeout_enabled==1 ){
             $optionsSAR_operacion['TIMEOUT'] = $method->tp_form_timeout;
         }
+        $optionsSAR_operacion['ECOMMERCENAME'] = 'VIRTUEMART';
+        $optionsSAR_operacion['ECOMMERCEVERSION'] = vmVersion::$RELEASE;
+        $optionsSAR_operacion['CMSVERSION'] = JVERSION;
+        $optionsSAR_operacion['PLUGINVERSION'] = $this->TodoPagoPluginVersion .'-'. $typeForm;
 
         $this->logInfo("TP - SARcomercio - ".json_encode($optionsSAR_comercio), "message");
 
@@ -660,6 +716,7 @@ class plgVmpaymentTodopago extends vmPSPlugin {
             
         }
     }
+
 
     private function address_loaded($payDataOperacion){
        
@@ -1651,6 +1708,7 @@ function plgVmOnStoreInstallPaymentPluginTable ($jplugin_id) {
     function display_btn_credentials(){ 
 echo        '<div style="margin-left: 202px; ">
             <div><img src="http://www.todopago.com.ar/sites/todopago.com.ar/files/logo.png"></div>
+            <div>V'.TP_PLUGIN_VERSION.'</div>
             <button id="btn-credentials-dev" name="btn-credentials" class="btn-config-credentials" >
                 Obtener credenciales Developers
             </button>

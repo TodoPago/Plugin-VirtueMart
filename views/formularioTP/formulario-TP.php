@@ -1,248 +1,599 @@
-<?php $_css =  JURI::base()."plugins/vmpayment/todopago/views/formularioTP/styles.css"; ?>
 
-<?php $_corner = JURI::base()."plugins/vmpayment/todopago/views/formularioTP/js/jquery.corner.js"; ?>
-		<?php if ($ambiente == "test") {?>
-		<script src="https://developers.todopago.com.ar/resources/v2/TPBSAForm.min.js"></script>
+<?php $_css_path =  JURI::base()."plugins/vmpayment/todopago/views/formularioTP/css"; ?>
+<?php $form_dir =  JURI::base()."plugins/vmpayment/todopago/views/formularioTP"; ?>
 
-		<?php } else {?>
-		<script src="https://forms.todopago.com.ar/resources/v2/TPBSAForm.min.js"></script>
+
+	<?php 
 		
-		<?php }?>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-		<script type="text/javascript" src="<?php echo $_corner ?>"></script>
-		<link rel="stylesheet" type="text/css" href="<?php echo $_css ?>">
-		<script type="text/javascript">
 
-			$(document).ready(function() {
-				$("#breadcrumbs").hide();
-  				$(".vm-order-done").hide();
-      			        $(':input').corner("round 3px");
-				$("#main").children().last().remove();
-			        $(":contains('Your order has been processed.')").last()[0].lastChild.remove();
+	if ($ambiente == "test") {
+		$env_url = 'https://developers.todopago.com.ar/resources/v2/TPBSAForm.min.js';
+	} else {
+		$env_url = 'https://forms.todopago.com.ar/resources/v2/TPBSAForm.min.js'; 
+	}
 
-			    $("#formaDePagoCbx").change(function () {
-				    if(this.value == 500 || this.value == 501){
-				    	$(".spacer").hide();
-				    }else{
-				    	$(".spacer").show();
-				    }
-				});
+	?>
 
-			    
-			});
+	<script src="<?php echo $env_url; ?>"></script>
 
-		</script>
-<br><br>	
+	<link href="<?php echo "$_css_path/grid.css"; ?>" rel="stylesheet" type="text/css">
+	<link href="<?php echo "$_css_path/form_todopago.css"; ?>" rel="stylesheet" type="text/css">
+	<link href="<?php echo "$_css_path/queries.css"; ?>" rel="stylesheet" type="text/css">
+	<script src="<?php echo "$_css_path/jquery-3.2.1.min.js"; ?>"></script>
+
 	<body class="contentContainer">
-		<div class="contentContainer main" style="width: auto">
-		<div id="tp-form-tph" class="left">
-			<div id="tp-logo"></div>
-			<div id="tp-content-form fieldset"><br/>
-				<div >
-					<label for="formaPagoCbx" class="tp-label required">Forma de Pago</label>
-					<div >
-						<select id="formaPagoCbx" class="select-form " style="height:31px"></select>
-					</div>
-				</div>
 
-				<div id="fields-card-payment" style="display:none;" >
-					<div style="height:91px">
-						<label for="numeroTarjetaTxt" class="tp-label required spacer">Número de Tarjeta</label>
-						<div class="input-box">
-							<input id="numeroTarjetaTxt" class="input-text required-entry"  maxlength="16" title="Número de Tarjeta"/></br>
-							<div class="error"  style="color:red;"  id="numeroTarjetaTxtError"></div>
-							<label id="numeroTarjetaLbl"  class="error"></label>
-						</div>
-					</div>
-				
-					<div >
-						<label for="medioPagoCbx" class="tp-label required">Medio de Pago</label>
-						<div class="input-box">
-							<select id="medioPagoCbx" class="select-form"></select></br>
-							<div class="error"  style="color:red;"  id="medioPagoCbxError"></div>
-						</div>
-					</div>
-					<div>
-						<label for="bancoCbx" class="tp-label required spacer">Banco Emisor</label>
-						<div class="input-box">
-							<select id="bancoCbx" class="select-form"></select></br>
-							<div class="error"  style="color:red;"  id="bancoCbxError"></div>
-						</div>
-					</div>
-
-					<div style="height:89px; width:300px">
-						<label id="labelPromotionTextId" class="left tp-label " style="width: 420px;">Cantidad de cuotas</label>
-						<select id="promosCbx" class="left" style="width: 290px;"></select></br>
-						<label id="promosLbl" class="left" style="margin-left: 10px; height:50px"></label><div class="clear"></div>
-					</div>
-
-					<div class="field">
-						<label id="peiLbl" for="peiCbx" class="tp-label spacer" style="width: 300px;">Pago con PEI</label>
-						<div class="input-box">
-							<input id="peiCbx" maxlength="16" title="Pago con PEI"/>
-						</div>
-					</div>
-
-					<div id="ExpirationDate" class="field left dateForm " style="width: 180px;height: 60px;margin-top: 0px;border-left-width: 10px;margin-left: 0px; margin-bottom:27px;" ></br>    
-		            	<select id="mesCbx"  maxlength="2" class="left" style="width: 58px;"></select>
-			         	<select id="anioCbx"  maxlength="2" class="left" style="width: 58px;"></select></br>
-			            <label id="fechaLbl"  style="color:red; font-size:0.8em; margin-top:0px; margin-left: 10px;" ></label>
-			            <!--div id="FechadevencimientoError" class="error"></div-->
-			            <div class="clear"></div>
-			            
-			      	</div>
-					
-					<div class="field" style="width:200px;">
-						<input  class="inputbox" id="codigoSeguridadTxt" class="left" style="width: 137px; margin-bottom: 8px;"/></br>
-						<label id="codigoSeguridadLbl" class="tp-label" style="font-size:0.8em; margin-top:0px;">Codigo de seguridad</label>
-						<div class="error" style="color:red;" id="codigoSeguridadTxtError"></div>
-						<div class="clear"></div>
-					</div>
-					
-					<div class="field">
-						<label for="nombreTxt" class="tp-label required">Nombre y Apellido</label>
-						<div class="input-box">
-							<input id="nombreTxt"/></br>
-							<div class="error"  style="color:red;" id="nombreTxtError"></div>
-						</div>
-					</div>
-					<div class="field">
-						<label for="tipoDocCbx" class="tp-label required spacer">Documento</label>
-						<div>
-							<div>
-								<select id="tipoDocCbx"></select>
-							</div>
-							<div>
-								<input class="inputbox" id="nroDocTxt"/></br>
-								<div class="error"  style="color:red;" id="nroDocTxtError"></div>	
-							</div>
-						</div>
-					</div>
-					<div class="field">
-						<label for="emailTxt" class="tp-label required">Email</label>
-						<div class="input-box">
-							<input id="emailTxt"/><br/>
-							<div class="error"  style="color:red;" id="emailTxtError"></div>
-						</div>
-					</div>
-					<div class="field">
-						<label id="tokenPeiLbl" for="tokenPeiTxt" class="tp-label">Token PEI</label>
-						<div class="input-box">
-							<input id="tokenPeiTxt"/></br>
-							<div class="error"  style="color:red;" id="peiTokenTxtError"></div>
-						</div>
-					</div>
-					
-				</div>
-
-				<div id="tp-bt-wrapper" style="width: 200px;">
-					<button id="MY_btnPagarConBilletera" class="tp-button left"  style="width: 131px;"/>
-					<button id="MY_btnConfirmarPago" class="tp-button right"/>
-				</div>
-
+		<div class="progress">
+			<div class="progress-bar progress-bar-striped active" id="loading-hibrid">
 			</div>
 		</div>
 
-	</div>
+		
+
+		<div class="tp_wrapper" id="tpForm">
+
+			<div class="header_info">
+		        <div class="bold">Total a pagar $<?php echo $data_operation['AMOUNT']; ?></div>
+		        <div>Elegí tu forma de pago</div>
+		    </div>
+
+
+			<section class="billetera_virtual_tp">
+				<div class="tp_row tp-flex">
+				    <div class="tp_col tp_span_1_of_2 texto_billetera_virtual text_size_billetera">
+				        <p>Pagá con tu <strong>Billetera Virtual Todo Pago</strong></p>
+				        <p>y evitá cargar los datos de tu tarjeta</p>
+				    </div>
+				    <div class="tp_col tp_span_1_of_2">
+				        <button id="btn_Billetera" title="Pagar con Billetera" class="tp_btn tp_btn_sm text_size_billetera">
+				            Iniciar Sesi&oacute;n
+				        </button>
+				    </div>
+				</div>
+			</section>
+
+			<section class="billeterafm_tp">
+				<div class="field field-payment-method">
+				    <label for="formaPagoCbx" class="text_small">Forma de Pago</label>
+				    <div class="input-box">
+				        <select id="formaPagoCbx" class="tp_form_control"></select>
+				        <span class="error" id="formaPagoCbxError"></span>
+				    </div>
+				</div>
+			</section>
+
+			<section class="billetera_tp">
+				<div class="tp_row">
+				    <p>
+				        Con tu tarjeta de crédito o débito
+				    </p>
+				</div>
+				<div class="tp_row">
+				    <div class="tp_col tp_span_1_of_2" style="height: 100%; overflow:hidden;">
+		                <label for="numeroTarjetaTxt" class="text_small">Número de Tarjeta</label>
+		                <div>
+			                <input id="numeroTarjetaTxt" class="tp_form_control" maxlength="19" 	title="Número de Tarjeta" min-length="14" autocomplete="off" style="height:27px;">
+		            	</div>
+		                <div style="position:relative;margin-left: 310px;width: 37.983px;margin-top: -39px;border-bottom-width: 0px;border-bottom-style: solid;margin-bottom: 22px;height: 29px;">
+			                <img src="<?php echo $form_dir;?>/images/empty.png" id="tp-tarjeta-logo"
+		                     alt="" style="width: 33px;" />
+		                </div>
+		                <!--span class="error" id="numeroTarjetaTxtError"></span-->
+		                <span id="numeroTarjetaLbl" class="error"></span>
+		            </div>
+				    <div class="tp_col tp_span_1_of_2">
+				        <label for="bancoCbx" class="text_small">Banco</label>
+				        <select id="bancoCbx" class="tp_form_control" placeholder="Selecciona banco"></select>
+				        <span class="error" id="bancoCbxError">
+				    </div>
+				    <div class="tp_col tp_span_1_of_2 payment-method">
+				        <label for="medioPagoCbx" class="text_small">Medio de Pago</label>
+				        <select id="medioPagoCbx" class="tp_form_control" placeholder="Mediopago"></select>
+				        <span class="error" id="medioPagoCbxError"></span>
+				    </div>
+				</div>
+
+				<section class="tp_row" id="peibox">
+				    <div class="tp_row tp_pei" style="height: 100px;">
+				        <div class="tp_col tp_span_1_of_2 tp_pei" >
+				            <label id="peiLbl" for="peiCbx" class="text_small right">Pago con PEI</label>
+				        </div>
+				        <label class="switch" id="switch-pei">
+				            <input type="checkbox" id="peiCbx">
+				            <span class="slider round"></span>
+				            <span id="slider-text"></span>
+				        </label>
+				    </div>
+				</section>
+
+				<!--div class="tp_row">
+				    <div class="tp_col tp_span_1_of_2">
+				        <label for="medioPagoCbx" class="text_small">Medio de Pago</label>
+				        <select id="medioPagoCbx" class="tp_form_control" placeholder="Mediopago"></select>
+				        <span class="error" id="medioPagoCbxError"></span>
+				    </div>
+				</div-->
+
+				<div class="tp_row">
+				    <div class="tp_col tp_span_1_of_2">
+				        <div class="tp_col tp_span_1_of_2">
+				            <label for="mesCbx" class="text_small"  style="width: 120%;" >Vencimiento</label>
+
+				            <div class="tp_row">
+				                <div class="tp_col tp_span_1_of_2"  >
+				                    <select id="mesCbx" maxlength="2" class="tp_form_control" placeholder="Mes"></select>
+				                </div>
+				                <div class="tp_col tp_span_1_of_2" >
+				                    <select id="anioCbx" maxlength="2" class="tp_form_control"></select>
+				                </div>
+				            	<span id="fechaLbl" class="error"></span>
+				            </div>
+				        </div>
+
+				        <div class="tp_col tp_span_1_of_3">
+				            <label  id="codigoSeguridadTexto" for="codigoSeguridadTxt" class="text_small">Código de Seguridad</label>
+				            <input id="codigoSeguridadTxt" class="tp_form_control" maxlength="4" autocomplete="off"/>
+				            <span class="error" id="codigoSeguridadTxtError"></span>
+				            <label id="codigoSeguridadLbl" class="spacer tp-cvv-lbl"></label>
+						</div>
+
+
+				        <div class="tp-cvv-helper-container">
+		                    <div class="tp-anexo clave-ico" id="tp-cvv-caller"></div>
+		                    <div id="tp-cvv-helper">
+		                        <p>
+		                            Para Visa, Master, Cabal y Diners, los 3 dígitos se encuentran en el <strong>dorso</strong>
+		                            de
+		                            tu tarjeta. (izq)
+		                        </p>
+		                        <p>
+		                            Para Amex, los 4 dígitos se encuentran en el frente de tu tarjeta. (der)
+			                    </p>
+			                    <img id="tp-cvv-helper-img" alt="ilustración tarjetas" src="<?php echo $form_dir; ?>/images/clave-ej.png">
+		                    </div>
+		                </div>
+
+
+
+				    </div>
+
+				    <div class="tp_col tp_span_1_of_2">
+				        <div class="tp_col tp_span_1_of_1">
+				            <label for="tipoDocCbx" class="text_small">Tipo</label>
+				            <select id="tipoDocCbx" class="tp_form_control"></select>
+				        </div>
+				        <div class="tp_col tp_span_1_of_2" id="tp-dni-numero" style="width:75.2%;">
+				            <label for="NumeroDocCbx" class="text_small">Número</label>
+				            <input id="nroDocTxt" maxlength="10" type="text" class="tp_form_control"
+				                   autocomplete="off"/>
+				            <span class="error" id="nroDocTxtError"></span>
+				        </div>
+				    </div>
+				</div>
+
+				<div class="tp_row">
+				    <div class="tp_col tp_span_1_of_2">
+				        <label for="nombreTxt" class="text_small">Nombre y Apellido</label>
+				        <input id="nombreTxt" class="tp_form_control" autocomplete="off" placeholder="" maxlength="50" style="height: 29px;">
+				        <span class="error" id="nombreTxtError"></span>
+
+				    </div>
+				    <div class="tp_col tp_span_1_of_2">
+				        <label for="emailTxt" class="text_small">Email</label>
+				        <input id="emailTxt" type="email" class="tp_form_control" placeholder="nombre@mail.com" data-mail=""
+				               autocomplete="off"/><br/>
+				        <span class="error" id="emailTxtError"></span>
+				    </div>
+				</div>
+
+				<div class="tp_row">
+				    <div class="tp_col tp_span_1_of_2">
+				        <label for="promosCbx" class="text_small">Cantidad de cuotas</label>
+				        <select id="promosCbx" class="tp_form_control"></select>
+				        <span class="error" id="promosCbxError"></span>
+				    </div>
+				    <div class="tp_col tp_span_1_of_2" style="height: 38px;margin-top: 0%;padding-top: 42px;" >
+				        <div class="clear">
+				        	<label id="promosLbl" class="left"></label>
+				        </div>
+				        <span class="error" id="peiTokenTxtError"></span>
+				    </div>
+				</div>
+
+				<div class="tp_row">
+					<div class="tp_col tp_span_2_of_2" style="height: 124px;">
+						<label id="tokenPeiLbl" for="tokenPeiTxt" class="text_small" style="display: inline-block; padding: 10px 10px 10px 2px;"><strong style="font-size:0.9em;">Superaste el monto acumulado utilizando P.E.I.</strong><p style="font-size:0.8em; "><br>Ingresá tu token de seguridad para verificar<br>tu identidad y continuar el pago.<br>Para obtener el token descargá la Aplicación de Todo Pago PEI<br> y seguí los pasos para la activarlo en un cajero Banelco.</p></label>
+				    </div>
+				    <div class="tp_col tp_span_1_of_2" style="margin-left:0%;">  
+				        <input id="tokenPeiTxt" class="tp_form_control tp-tokenpei" style="padding-left: 0%;">
+					</div>
+				</div>
+
+
+
+				<div class="tp_row">
+				    <div class="tp_col tp_span_2_of_2" style="margin-top: 6%;">
+				        <button id="btn_ConfirmarPago" class="tp_btn" title="Pagar" class="button"><span>Pagar</span></button>
+				    </div>
+				    <div class="tp_col tp_span_2_of_2">
+				        <div class="confirmacion">
+				            AL CONFIRMAR EL PAGO ACEPTO LOS <a href="https://www.todopago.com.ar/terminos-y-condiciones-comprador" target="_blank" title="Términos y Condiciones" id="tycId" class="tp_color_text">TÉRMINOS
+				            Y CONDICIONES</a> DE TODO PAGO.
+				        </div>
+				    </div>
+				</div>
+			</section>
+
+			<div class="tp_row">
+				<div id="tp-powered" align="right">
+				    Powered by <img id="tp-powered-img" src="<?php echo $form_dir; ?>/images/tp_logo_prod.png"/>
+				</div>
+			</div>
+		</div>
 
 	</body>
+	
 	<script>
+		//var jQuery = $.noConflict();
+		var tpformJquery = $.noConflict();
+		var urlScript = "<?php echo $env_url; ?>";
 		//securityRequesKey, esta se obtiene de la respuesta del SAR
+		var urlSuccess = "<?php echo $data_comercial['URL_OK'] ?>";
+		var urlError = "<?php echo $data_comercial['URL_ERROR'] ?>";
 		var security = '<?php echo $rta["PublicRequestKey"]; ?>';
 		var mail = "<?php echo $data_operation['CSSTEMAIL'] ?>";
-		var CompleteName = "<?php echo $data_operation['CSBTLASTNAME'].' '.$data_operation['CSBTFIRSTNAME'] ?>";
-		
-		jQuery("#formaPagoCbx").change(function(){
-		    if ( jQuery("#formaPagoCbx").val()==1 ){
-		    	jQuery("#fields-card-payment").show();
-		    }else{ jQuery("#fields-card-payment").hide(); }
-		});
-		
-		$("#tp-bt-wrapper,#formaPagoCbx,#numeroTarjetaTxt").click(function(e){
-			jQuery("input,select").removeClass("error");
-			jQuery("span.error").html("");
+		var completeName = "<?php echo $data_operation['CSBTLASTNAME'].' '.$data_operation['CSBTFIRSTNAME'] ?>";
+		var helperCaller = tpformJquery("#tp-cvv-caller");
+		var helperPopup = tpformJquery("#tp-cvv-helper");
+		var defDniType = 'DNI';
+		var medioDePago = document.getElementById('medioPagoCbx');
+	    var tarjetaLogo = document.getElementById('tp-tarjeta-logo');
+	    var poweredLogo = document.getElementById('tp-powered-img');
+	    var numeroTarjetaTxt = document.getElementById('numeroTarjetaTxt');
+	    var poweredLogoUrl = "<?php echo $form_dir;?>/images/";
+	    var emptyImg = "<?php echo $form_dir;?>/images/empty.png";
+ 		var switchPei = tpformJquery("#switch-pei");
+	    var sliderText = tpformJquery("#slider-text");
+		var peiCbx = tpformJquery("#peiCbx");
+	    var idTarjetas = {
+	        42: 'VISA',
+	        43: 'VISAD',
+	        1: 'AMEX',
+	        2: 'DINERS',
+	        6: 'CABAL',
+	        7: 'CABALD',
+	        14: 'MC',
+	        15: 'MCD'
+	    };
 
-		});	
+		var diccionarioTarjetas = {
+			'VISA': 'VISA',
+			'VISA DEBITO': 'VISAD',
+			'AMEX': 'AMEX',
+			'DINERS': 'DINERS',
+			'CABAL': 'CABAL',
+			'CABAL DEBITO': 'CABALD',
+			'MASTER CARD': 'MC',
+			'MASTER CARD DEBITO': 'MCD',
+			'NARANJA': 'NARANJA'
+		};
 
-		/************* CONFIGURACION DEL API ************************/
-		window.TPFORMAPI.hybridForm.initForm({
-			callbackValidationErrorFunction: 'validationCollector',
-			callbackBilleteraFunction: 'billeteraPaymentResponse',
-			botonPagarConBilleteraId: 'MY_btnPagarConBilletera',
-			modalCssClass: 'modal-class',
-			modalContentCssClass: 'modal-content',
-			beforeRequest: 'initLoading',
-			afterRequest: 'stopLoading',
-			callbackCustomSuccessFunction: 'customPaymentSuccessResponse',
-			callbackCustomErrorFunction: 'customPaymentErrorResponse',
-			botonPagarId: 'MY_btnConfirmarPago',
-			codigoSeguridadTxt: 'Codigo',
-		});
 
-		window.TPFORMAPI.hybridForm.setItem({
-			publicKey: security,
-			//merchantId: merchantId,
-			defaultNombreApellido: CompleteName,
-			defaultMail: mail,
-			//numericAmount: numericAmount
-		});
+		/************* HELPERS *************/
+		numeroTarjetaTxt.onblur = clearImage;
+
+	    function clearImage() {
+	        tarjetaLogo.src = emptyImg;
+	    }
+
 		
-		//callbacks de respuesta del pago
-		function validationCollector(parametros) {
+	    function cardImage(select) {
+	        var tarjeta = idTarjetas[select.value];
+	        console.log(tarjeta);
+	        if (tarjeta === undefined) {
+	            tarjeta = diccionarioTarjetas[select.textContent];
+	        }
+	        if (tarjeta !== undefined) {
+	            tarjetaLogo.src = 'https://forms.todopago.com.ar/formulario/resources/images/' + tarjeta + '.png';
+	            tarjetaLogo.style.display = 'block';
+	        }
+
+	    }
+
+
+
+	    /************* SMALL SCREENS DETECTOR (?) *************/
+	    function detector() {
+	        console.log(tpformJquery("#tp-form").width());
+	        var tpFormWidth = tpformJquery("#tp-form").width();
+	        if (tpFormWidth < 950) {
+	            tpformJquery(".tp-col-right").css("flex-basis", "350px");
+	            tpformJquery(".tp-col-left").css("flex-basis", "350px");
+	        }
+	        if (tpFormWidth < 800) {
+	            tpformJquery(".tp-col-right").css("flex-basis", "300px");
+	            tpformJquery(".tp-col-left").css("flex-basis", "300px");
+	        }
+	        if (tpFormWidth < 720) {
+	            tpformJquery(".tp-container").css({
+	                "margin-left": "0%",
+	                "width": "100%",
+	                "padding": "5px"
+	            });
+	            tpformJquery(".left-col").width('100%');
+	            tpformJquery(".right-col").width('100%');
+	            tpformJquery(".advertencia").css("height", "50px");
+	            tpformJquery(".row").css({
+	                "height": "60px",
+	                "width": "95%",
+	                "margin-bottom": "30px"
+	            });
+	            tpformJquery("#codigo-col").css("margin-bottom", "10px");
+	            tpformJquery("#row-pei").css("height", "100px");
+	            tpformJquery(".tp-col-left").css("flex-basis", "320px");
+	            tpformJquery(".tp-col-right").css("flex-basis", "320px");
+	            tpformJquery(".tp-container-2-columns").css({
+	                "height": "400px"
+	            });
+	        }
+	        if (tpformJquery("#tp-form").width() < 600) {
+	            tpformJquery(".tp-container-2-columns").css({"margin-top": "200px"});
+	        }
+	    }
+
+	    loadScript(urlScript, function () {
+	        loader();
+	    });
+
+	    function loadScript(url, callback) {
+	        var entorno = (url.indexOf('developers') === -1) ? 'prod' : 'developers';
+	        console.log(entorno);
+	        poweredLogo.src = poweredLogoUrl + 'tp_logo_' + entorno + '.png';
+	        var script = document.createElement("script");
+	        script.type = "text/javascript";
+	        if (script.readyState) {  //IE
+	            script.onreadystatechange = function () {
+	                if (script.readyState === "loaded" || script.readyState === "complete") {
+	                    script.onreadystatechange = null;
+	                    callback();
+	                }
+	            };
+	        } else {  //et al.
+	            script.onload = function () {
+	                callback();
+	            };
+	        }
+	        script.src = url;
+	        document.getElementsByTagName("head")[0].appendChild(script);
+	    }
+
+	    function loader() {
+	        tpformJquery("#loading-hibrid").css("width", "50%");
+	        setTimeout(function () {
+	            ignite();
+	            tpformJquery(".payment-method").hide();
+	            tpformJquery(".billeterafm_tp").hide();
+	        }, 100);
+
+	        setTimeout(function () {
+	            tpformJquery("#loading-hibrid").css("width", "100%");
+	        }, 1000);
+
+	        setTimeout(function () {
+	            tpformJquery(".progress").hide('fast');
+	        }, 2000);
+
+	        setTimeout(function () {
+	            tpformJquery("#tpForm").fadeTo('fast', 1);
+	        }, 2200);
+	    }
+
+	    //callbacks de respuesta del pago
+	    window.validationCollector = function (parametros) {
+
+
+
+	        console.log("My validator collector");
+	        console.log(parametros);
+
+
+	        tpformJquery("#peibox").hide();
+	        console.log(parametros.field + " ==> " + parametros.error);
+	        tpformJquery("#" + parametros.field).addClass("error");
+	        var field = parametros.field;
+	        input = field.replace(/ /g, "");
+	        console.log(input);
+	        tpformJquery("#" + input + "Error").html(parametros.error);
+	        console.log(parametros); 
+
+	        if (input.search("Txt") !== -1) {
+	            label = input.replace("Txt", "Lbl");
+	        } else {
+	            label = input.replace("Cbx", "Lbl");
+	        }
+	        if (document.getElementById(label) !== null) {
+	            document.getElementById(label).innerText = parametros.error;
+	        }
+
+	        //console.log(document.getElementById("codigoSeguridadTxtError").innerText != '');
+	        if(document.getElementById("codigoSeguridadTxtError").innerText != ''){
+	        	document.getElementById("codigoSeguridadLbl").innerText = '';
+	        }
+
+
+
+
+
+	        ////////////////////////////////
+
+	        /*
 			console.log("My validator collector");
-			console.log(parametros.field + " ==> " + parametros.error);
-			jQuery("#"+parametros.field).addClass("error");
-			var field = parametros.field;
-			field = field.replace(/ /g, "");
-			console.log(field);
-			jQuery("#"+field+"Error").html(parametros.error);
-			//alert(parametros.error);
-			console.log(parametros);
-		}
-		function billeteraPaymentResponse(response) {
-			console.log("My wallet callback");
-			console.log(response.ResultCode + " : " + response.ResultMessage);
-			console.log(response);
-			if(response.AuthorizationKey){
-			if(response.ResultCode == -1) {
-				url_ok = "<?php echo $data_comercial['URL_OK'] ?>&Answer="+response.AuthorizationKey;
-				window.location.href = url_ok;
+
+			console.log(parametros.field + " -> " + parametros.error);
+
+			tpformJquery("#peibox").hide();
+
+			var input = parametros.field;
+
+			if (input.search("Txt") !== -1) {
+				label = input.replace("Txt", "Lbl");
 			} else {
-				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Answer="+response.AuthorizationKey;
-				window.location.href = url_error;
+				label = input.replace("Cbx", "Lbl");
 			}
-			} else{
-				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Error="+response.ResultMessage;
-				window.location.href = url_error;
+
+			if (document.getElementById(label) !== null) {
+				document.getElementById(label).innerText = parametros.error;
 			}
-		}
-		function customPaymentSuccessResponse(response) {
-			console.log("My custom payment success callback");
-			console.log(response.ResultCode + " : " + response.ResultMessage);
-			console.log(response);
-			console.log("aca redirijo a :<?php echo $data_comercial['URL_OK'] ?>&Answer="+response.AuthorizationKey);
-			url_ok = "<?php echo $data_comercial['URL_OK'] ?>&Answer="+response.AuthorizationKey;
-			window.location.href = url_ok;
-		}
-		
-		function customPaymentErrorResponse(response) {
-			console.log("Mi custom payment error callback");
-			console.log(response.ResultCode + " : " + response.ResultMessage);
-			console.log(response);
-			if(response.AuthorizationKey){
-				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Answer=" + response.AuthorizationKey;
-				window.location.href = url_error;
-			} else{
-				url_error = "<?php echo $data_comercial['URL_ERROR'] ?>&Error="+response.ResultMessage;
-				window.location.href = url_error;
+
+			*/
+
+	    };
+
+	    function billeteraPaymentResponse(response) {
+	        console.log("Iniciando billetera");
+	        console.log(response.ResultCode + " -> " + response.ResultMessage);
+	        if (response.AuthorizationKey) {
+	            window.location.href = urlSuccess + "&Answer=" + response.AuthorizationKey;
+	        } else {
+	            window.location.href = urlError + "&Error=" + response.ResultMessage;
+	        }
+	    }
+
+	    function customPaymentSuccessResponse(response) {
+	        console.log("Success");
+	        console.log(response.ResultCode + " -> " + response.ResultMessage);
+	        window.location.href = urlSuccess + "&Answer=" + response.AuthorizationKey;
+	    }
+
+	    function customPaymentErrorResponse(response) {
+	        console.log(response.ResultCode + " -> " + response.ResultMessage);
+	        if (response.AuthorizationKey) {
+	            window.location.href = urlError + "&Answer=" + response.AuthorizationKey + "&Error=" + response.ResultMessage;
+	        } else {
+	            window.location.href = urlError + "&Error=" + response.ResultMessage;
+	        }
+	    }
+
+	    window.initLoading = function () {
+	        console.log("init");
+	        cardImage(medioDePago);
+	        //tpformJquery("#codigoSeguridadLbl").html("");
+	        tpformJquery("#peibox").hide();        
+
+	        tpformJquery("[id*=Error]").html('');
+
+	    };
+
+	    window.stopLoading = function () {
+	        console.log('Stop loading...');
+
+	        tpformJquery("#peibox").hide();
+
+	        if (document.getElementById('peiLbl').style.display === "inline-block") {
+	        	tpformJquery("label > p").each(function() {
+		               var clean_strip = tpformJquery(this).text().replace("<br>","");
+		               tpformJquery(this).html(clean_strip);
+		           });
+
+	            console.log("visible");
+	            tpformJquery("#peibox").show("slow");
+
+	        } else {
+	            console.log("invisible");
+	            tpformJquery("#peibox").hide("fast");
+	            tpformJquery("#peiCbx").prop("checked", false);
+	        }
+
+	       // var peiCbx = tpformJquery("#peiCbx");
+	        var rowPei = tpformJquery("#row-pei");
+	        //tpformJquery.uniform.restore();
+
+	        if (peiCbx.css('display') !== 'none') {
+	            activateSwitch(getInitialPEIState());
+	        } else {
+	            rowPei.css("display", "none");
+	            tpformJquery("#peiCbx").prop("checked", false);
+	        }
+	    };
+
+	    // Verifica que el usuario no haya puesto para solo pagar con PEI y actúa en consecuencia
+	    function activateSwitch(soloPEI) {
+			readPeiCbx();
+
+			if (!soloPEI) {
+			 tpformJquery("#switch-pei").click(function () {
+			     console.log("CHECKED", peiCbx.prop("checked"));
+
+			     if (peiCbx.prop("checked") === false) {
+			         peiCbx.prop("checked", true);
+			        switchPei.prop("checked", false);
+			        peiCbx.prop("checked", false); 
+			        sliderText.text("NO");
+			        sliderText.css('transform', 'translateX(24px)');
+
+			     } else {
+			        peiCbx.prop("checked", false);
+			        switchPei.prop("checked", true);
+			        peiCbx.prop("checked", true);  
+			        sliderText.text("SÍ");
+			        sliderText.css('transform', 'translateX(3px)');
+			     }
+
+			 });
 			}
+
 		}
-		function initLoading() {
-			console.log('Cargando');
-		}
-		function stopLoading() {
-			console.log('Stop loading...');
-		}
+     
+	    function readPeiCbx() {
+	        if (peiCbx.prop("checked", true)) {
+	            switchPei.prop("checked", true);
+	            sliderText.text("SÍ");
+	            sliderText.css('transform', 'translateX(3px)');
+	        } else {
+	           switchPei.prop("checked", true);
+	           sliderText.text("NO");
+	           sliderText.css('transform', 'translateX(24px)');
+	       }
+	    }
+
+	    function getInitialPEIState() {
+	        return (tpformJquery("#peiCbx").prop("disabled"));
+	    }
+
+	    tpformJquery('#peiLbl').bind("DOMSubtreeModified", function () {
+	        tpformJquery("#peibox").hide();
+	    });
+
+
+	    helperCaller.click(function () {
+            helperPopup.toggle(500);
+         }
+    	);
+
+		function ignite() {
+	        /************* CONFIGURACION DEL API ************************/
+	        window.TPFORMAPI.hybridForm.initForm({
+	            callbackValidationErrorFunction: 'validationCollector',
+	            callbackBilleteraFunction: 'billeteraPaymentResponse',
+	            callbackCustomSuccessFunction: 'customPaymentSuccessResponse',
+	            callbackCustomErrorFunction: 'customPaymentErrorResponse',
+	            botonPagarId: 'btn_ConfirmarPago',
+	            botonPagarConBilleteraId: 'btn_Billetera',
+	            modalCssClass: 'modal-class',
+	            modalContentCssClass: 'modal-content',
+	            beforeRequest: 'initLoading',
+	            afterRequest: 'stopLoading'
+	        });
+
+	        /************* SETEO UN ITEM PARA COMPRAR ************************/
+	        window.TPFORMAPI.hybridForm.setItem({
+	            publicKey: security,
+	            defaultNombreApellido: completeName,
+	            defaultMail: mail,
+	            defaultTipoDoc: defDniType
+	        });
+	    }
+
 
 	</script>
 <style>

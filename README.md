@@ -31,13 +31,12 @@ La versión de este plug in esta testeada en PHP 5.3-5.4-5.6, VIRTUEMART 3.0+ Y 
 ## Instalación
 Observación: Descomentar: <em>extension=php_soap.dll</em> y <em>extension=php_openssl.dll</em> del php.ini, ya que para la conexión al gateway se utiliza la clase SoapClient del API de PHP. 
 
-1.  Extensions->plugin TodoPago -> Install
-2.	Subir el archivo .zip
-3.	Extensions->Extension Manager buscar el plugin TodoPago y habilitarlo
+1.  Extensions-> Manage -> Install
+2.  Subir el archivo .zip
+3.  Extensions->Extension Manager buscar el plugin TodoPago y habilitarlo
 <sub><em>Extension Manager</em></sub>
 ![imagen Extension Manager](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/extension-manager.png)
 
-<br />
 [<sub>Volver a inicio</sub>](#inicio)
 
 <a name="configuracion"></a>
@@ -53,13 +52,13 @@ Al grabar dirigirse a la tab Configuration y completar los datos de conexión y 
 
 ![imagen Payment Methods](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/payment-methods-2.png)
 
-<br />
+
 [<sub>Volver a inicio</sub>](#inicio)
-<br />
+
 
 [Configuracion de Logs](#conflog).
 <a name="conflog"></a>
-####Configuracion de Logs
+#### Configuracion de Logs
 Los logs del comercio realizado por los compradores tal como la autorizacion de compra (sendAuthorizeRequest) y confirmacion (GetAuthorizeRequest) se harán en el directorio de logs por defecto de joomla que es la carpeta logs/ con el nombre de todopago.0.log.php o todopago.log.
 Para los logs que se realizan desde el lado del administrador , tal como sucede al hacer una devolucion (voidRequest y returnRequest), Virtuemart pide que especifique una carpeta ubicada fuera del proyecto por cuestiones de seguridad de informacion. este directorio puede ser por ejemplo: www/vmfiles 
 Para realizar esta configuracion:
@@ -69,14 +68,13 @@ Para realizar esta configuracion:
  - Ir a VirtueMart->Configuration->Templates y completar el campo Safe Path con la ruta especificada anteriormente y guardar 
  ![imagen configuracion_logs](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/vm_conflog2.PNG) 
  - Luego de esto ya estara configurada carpeta de logs para el administrador del comercio.
-<br />
+
 [<sub>Volver a inicio</sub>](#inicio)
-<br />
 
 
 [Obtener datos de configuracion](#getcredentials).
 <a name="getcredentials"></a>
-####Obtener datos de configuracion
+#### Obtener datos de configuracion
 En el popup loguearse con el mail y password de Todopago. Los datos se cargaran automaticamente en los campos Authorization HTTP y Id Site Todo Pago code en el ambiente correspondiente (Desarrollo o produccion ) y solo hay que hacer click en el boton guardar datos y listo.
 ![imagen de solapas de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/virtue_credentials.png)
 
@@ -94,7 +92,7 @@ En la versión 1.7 del Plugin se incluyen dos tipos de formularios de pago, redi
 </br>
 
 <a name="maxcuotas"></a>
-####Configuración de Maximo de Cuotas
+#### Configuración de Maximo de Cuotas
 Se puede configurar la cantidad máxima de cuotas que ofrecerá el formulario de TodoPago con el campo cantidad máxima de cuotas. Para que se tenga en cuenta este valor se debe habilitar el campo Habilitar máximo de cuotas y tomará el valor fijado para máximo de cuotas. En caso que esté habilitado el campo y no haya un valor puesto para las cuotas se tomará el valor 12 por defecto.
 ![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/virtuemart/virtue-maxinstallments.png)
 </br>
@@ -103,7 +101,7 @@ Se puede configurar la cantidad máxima de cuotas que ofrecerá el formulario de
 </br>
 
 <a name="timeout"></a>
-####Configuración de tiempo de vida del formulario
+#### Configuración de tiempo de vida del formulario
 En la configuracion del plugin se puede setear el tiempo maximo en el que se puede realizar el pago del formulario en milisegundos. Por defecto si no se envia, 1800000 (30 minutos)
 Valor minimo: 300000 (5 minutos)
 Valor maximo: 21600000 (6hs)
@@ -112,13 +110,6 @@ Valor maximo: 21600000 (6hs)
 [<sub>Volver a inicio</sub>](#inicio)
 
 </br>
-
-
-
-
-
-
-
 
 <a name="tca"></a>
 [Nuevas columnas y atributos](#tca)

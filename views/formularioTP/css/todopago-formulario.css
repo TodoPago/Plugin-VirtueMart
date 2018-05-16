@@ -1,0 +1,373 @@
+/* Hoja de estilo del formulario */
+
+/* font-face */
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 400;
+    url('lato-regular.ttf') format('truetype');
+}
+
+/* ANIMACIÓN */
+
+@keyframes barFill {
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+/* Modificaciones para WP */
+
+input, select {
+    box-sizing: border-box;
+}
+
+:-ms-input-placeholder {
+    font-size: 12px;
+    font-family: 'Lato', sans-serif !important;
+    opacity: 0.8;
+}
+
+::placeholder {
+    font-size: 12px;
+    font-family: 'Lato', sans-serif !important;
+    opacity: 0.8;
+    padding: 0.5rem !important;
+}
+
+#tp-form, input, select {
+    font-size: 12px !important;
+    font-family: 'Lato', sans-serif !important;
+}
+
+/* GLOBALES */
+
+.tp-col-2 {
+    width: 25%
+}
+
+.tp-col-4 {
+    width: 50%;
+    float: left;
+}
+
+.tp-col-6 {
+    width: 74%;
+}
+
+.tp-btn {
+    text-decoration: none;
+    color: #ffffff;
+    border-radius: 2px;
+    display: inline-block;
+    padding: 5px 15px;
+    background-color: #E6007E;
+    border: none;
+    font-weight: 400;
+    font-size: 14px
+}
+
+.tp-btn :hover {
+    background-color: #DD008A
+}
+
+.tp-container {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    background-color: #f8f8f8;
+    font-family: 'Lato', sans-serif;
+    width: 100%;
+}
+
+#switch-pei {
+    float: right;
+}
+
+#row-pei {
+    align-items: flex-start
+}
+
+#tp-container-billetera {
+    height: 80px;
+}
+
+.tp-container-2-columns {
+    width: 100%;
+    height: 700px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction:row;
+}
+
+.tp-title {
+    font-size: 20px
+}
+
+.tp-pull-right {
+    right: 0;
+    float: right;
+    clear: both
+}
+
+.tp-input {
+    height: 60px;
+    width: 100%;
+}
+
+.warning {
+    color: red;
+    padding: 1px;
+    font-style: normal !important;;
+    font-weight: 400 !important;;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    font-family: 'Lato', sans-serif !important;
+}
+
+.fail {
+    background-color: lightpink;
+    border-color: red;
+}
+
+.tp-col {
+    height: 49%;
+}
+
+.tp-col-sm-4 {
+    flex-basis: 100%;
+    max-width: 500px;
+}
+
+.tp-col-left {
+    order:1;
+}
+
+.tp-col-right {
+    order:2;
+}
+
+.tp-row {
+    display: flex;
+    min-height: 60px;
+    max-height: 60px;
+    margin-bottom: 5px;
+    align-items: start;
+}
+
+.tp-row input {
+    padding-left: 5px;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px lightgray solid;
+    line-height: 20px
+}
+
+.tp-row select {
+    padding-left: 1px
+}
+
+.tp-row-error {
+    display: flex;
+    width: 100%;
+    height: 30px;
+    align-items: start;
+}
+
+.formuHibrido button {
+    margin: 5px;
+}
+
+/* PARTICULARES */
+
+#todopago-logo {
+    margin: 10px 10px 0 0;
+}
+
+#loading-hibrid {
+    border-radius: 0 5px 5px 0;
+    background-color: rgb(244, 0, 122);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(244, 180, 122, .5) 35px, rgba(244, 200, 122, .5) 70px);
+    width: 0;
+    animation-name: barFill;
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+    height: 100%;
+}
+
+.progress {
+    height: 40px;
+    width: 100%
+}
+
+#formaPagoCbx {
+    width: 80%;
+    margin-left: 10%;
+}
+
+.tp-no-cupon {
+    font-size: 14px
+}
+
+
+#tp-container-billetera span {
+
+}
+
+#tp-form {
+    opacity: 0
+}
+
+#peiCbx {
+    opacity: 0;
+}
+
+#contenedor-formulario {
+    width: 100%;
+    height: 100%;
+    display: none;
+    background-color: rgb(240, 240, 240);
+}
+
+.modal-class {
+}
+
+.modal-content {
+}
+
+#todopago_logo {
+    width: 110px;
+    height: 40px;
+    margin: 5px 5px;
+}
+
+#tpForm {
+    display: none;
+}
+
+.loaded-form {
+    display: none;
+}
+
+#loading-hibrid {
+    width: 0;
+}
+
+.barFiller {
+    animation-name: barFill;
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 5;
+}
+
+.tp-btn-pagar {
+    height: 50px;
+    width: 100%
+}
+
+.tp-cft {
+    font-size: 20px;
+}
+
+/* The switch - the box around the slider */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+    display: none;
+}
+
+/* The slider */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+@media (min-width: 600px){
+
+    #row-pei {
+        min-height:100px !important;
+    }
+
+    #tp-container-billetera {
+        height: 100px;
+        padding: 30px;
+    }
+
+    .tp-container-2-columns {
+        align-content: space-around;
+        height: 390px;
+    }
+
+    .tp-container {
+        margin-left: 5%;
+        width: 90%;
+        padding: 30px;
+    }
+
+    .tp-col-left {
+        flex-basis: 400px;
+        order:1;
+    }
+
+    .tp-col-right {
+        flex-basis: 400px;
+        order: 2;
+    }
+
+    .tp-col-sm-4 {
+        height: 100%;
+    }
+}
